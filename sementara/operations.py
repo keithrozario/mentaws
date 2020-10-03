@@ -7,14 +7,16 @@ import os
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends.openssl import backend
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+from cryptography.fernet import InvalidToken
+
+from .exceptions import InvalidPasswordError
 
 
 def get_platform_config() -> dict:
     """
     :return: platform_config : dict of platform configurations (aws_directory, credentials file)
     """
-    with open('config.json', 'r') as local_config:
-        config = json.loads(local_config.read())
+    from .config import config
     platform_config = config[platform.system()]
 
     user_name = getpass.getuser()
@@ -28,6 +30,8 @@ def get_platform_config() -> dict:
 
 
 def load_conf_file() -> dict:
+    "Return platform configuration"
+
     platform_config = get_platform_config()
     conf_file_path = os.path.join(platform_config['aws_directory'], platform_config['conf_file_name'])
 
@@ -87,7 +91,10 @@ def decrypt_creds_file(password: str, salt: str) -> str:
     
     with open(encrypted_file_path, 'rb') as encrypted_file:
         encrypted_data = encrypted_file.read()
-        data = key.decrypt(encrypted_data).decode('utf-8')
+        try:
+            data = key.decrypt(encrypted_data).decode('utf-8')
+        except InvalidToken:
+            raise InvalidPasswordError("Decryption Password is not valid")
 
     return data
 

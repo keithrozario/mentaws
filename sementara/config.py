@@ -1,5 +1,5 @@
-{
-    "default_duration_seconds": 28800,
+config = {
+    "default_duration_seconds": 14400,
     "default_region": "ap-southeast-1",
     "Darwin":{
         "aws_directory": "/Users/{user_name}/.aws",

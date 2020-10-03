@@ -1,7 +1,7 @@
 import boto3
 import os
 from configparser import ConfigParser
-from operations import get_platform_config
+from .operations import get_platform_config
 
 
 def get_token(key_id: str, secret_access_key: str, duration_seconds: int, region: str = 'ap-southeast-1') -> dict:
