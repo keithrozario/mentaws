@@ -21,6 +21,8 @@ def main():
         setup()
     elif "refresh" in sys.argv[1:]:
         refresh()
+    elif "reencrypt" in sys.argv[1:]:
+        reencrypt()
     else:
         print(
             """
@@ -31,6 +33,7 @@ Usage   : sementara <command> <args>
 
 Commands: setup      first time setup to encrypt credentials file, and generate temporary tokens
           refresh    refresh credentials
+          reencrypt  change the password used for encryption
         """
         )
 
@@ -46,10 +49,10 @@ def setup():
 
     if not os.path.isfile(sementara_encrypted_file):
         config = setup_conf_file(platform_config)
-        p = getpass.getpass(prompt="Enter encryption password: ")
-        p2 = getpass.getpass(prompt="Confirm Password: ")
+        p = getpass.getpass(prompt="🔑 Enter encryption password: ")
+        p2 = getpass.getpass(prompt="🔑 Confirm Password: ")
         if p == p2:
-            encrypt_creds_file(password=p, salt=config["salt"])
+            encrypt_creds_file(platform_config=platform_config, password=p, salt=config["salt"])
             print(
                 "AWS credentials encrypted, run sementara again to generate new creds"
             )
@@ -67,17 +70,10 @@ def refresh():
     platform_config = get_platform_config()
     config = load_conf_file(platform_config)
 
-    # Decrypt credentials file
-    try:
-        p = getpass.getpass(prompt="🔑 Enter password: ")
-        data = decrypt_creds_file(
-            platform_config=platform_config, password=p, salt=config["salt"]
-        )
-        creds = configparser.ConfigParser()
-        creds.read_string(data)
-    except InvalidPasswordError:
-        print(" 🛑 Invalid password, exiting 🛑")
-        exit(1)
+    creds = decrypt_credentials(
+        platform_config=platform_config,
+        config=config,
+    )
 
     # get AWS configuration
     aws_config = get_aws_config(platform_config)
@@ -102,3 +98,56 @@ def refresh():
     print(f"\n\nYou're ready to go 🚀🚀 ")
 
     return
+
+
+def reencrypt():
+
+    platform_config = get_platform_config()
+    config = load_conf_file(platform_config)
+
+    creds = decrypt_credentials(
+        platform_config=platform_config,
+        config=config,
+        password_prompt="🔑 Enter **current** password:",
+        return_type="str"
+    )
+
+    p = getpass.getpass(prompt="🔑 Enter **NEW** password: ")
+    p2 = getpass.getpass(prompt="🔑 Confirm **NEW** password: ")
+
+    if p == p2:
+        encrypt_creds_file(
+            platform_config=platform_config,
+            password=p,
+            salt=config["salt"],
+            creds=creds.encode('utf-8')
+        )
+        print(
+            "Password changed, please note this change is irreversible."
+        )
+    else:
+        print("Passwords do no match, aborting...")
+        exit(1)
+
+    return
+
+
+def decrypt_credentials(platform_config, config, password_prompt="🔑 Enter password:", return_type=None):
+
+    # Decrypt credentials file
+    p = getpass.getpass(prompt=password_prompt)
+    try:
+        data = decrypt_creds_file(
+            platform_config=platform_config, password=p, salt=config["salt"]
+        )
+    except InvalidPasswordError:
+        print(" 🛑 Invalid password, exiting 🛑")
+        exit(1)
+
+    if return_type == "str":
+        return data
+
+    creds = configparser.ConfigParser()
+    creds.read_string(data)
+
+    return creds
