@@ -42,6 +42,19 @@ def load_conf_file(platform_config: dict) -> dict:
     return config
 
 
+def load_profiles(platform_config: dict, profiles: list) -> dict:
+    "Loads missing profiles into profile file"
+
+    profile_details = {}
+    prof_file_path = os.path.join(platform_config['aws_directory'], platform_config['profile_file_name'])
+    with open(prof_file_path, 'w') as prof_file:
+        for profile in profiles:
+            profile_details[profile] = {}
+        prof_file.write(json.dumps(profile_details))
+
+    return
+
+
 def get_key(password: bytes, salt: bytes, n=2**18, r=8, p=1, length=32) -> Fernet:
     """
     :param password: Password in bytes

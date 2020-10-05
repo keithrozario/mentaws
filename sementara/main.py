@@ -1,3 +1,4 @@
+import json
 import getpass
 import configparser
 import sys
@@ -12,6 +13,7 @@ from .operations import (
     decrypt_creds_file,
     write_creds_file,
     get_platform_config,
+    load_profiles
 )
 
 
@@ -23,6 +25,8 @@ def main():
         refresh()
     elif "reencrypt" in sys.argv[1:]:
         reencrypt()
+    elif "list" in sys.argv[1:]:
+        list_profiles()
     else:
         print(
             """
@@ -141,13 +145,29 @@ def decrypt_credentials(platform_config, config, password_prompt="🔑 Enter pas
             platform_config=platform_config, password=p, salt=config["salt"]
         )
     except InvalidPasswordError:
-        print(" 🛑 Invalid password, exiting 🛑")
+        print("🛑 Invalid password, exiting 🛑")
         exit(1)
+
+    creds = configparser.ConfigParser()
+    creds.read_string(data)
+    load_profiles(platform_config, creds.sections())
 
     if return_type == "str":
         return data
 
-    creds = configparser.ConfigParser()
-    creds.read_string(data)
-
     return creds
+
+
+def list_profiles():
+
+    platform_config = get_platform_config()
+    prof_file_path = os.path.join(platform_config['aws_directory'], platform_config['profile_file_name'])
+    with open(prof_file_path, 'r') as prof_file:
+        profiles = json.loads(prof_file.read())
+
+    for k, profile in enumerate(profiles.keys()):
+        print(f"{k+1:2}. {profile}")
+
+    print(f"\nFound total of {k+1} profiles 👷🏿\n")
+
+    return
