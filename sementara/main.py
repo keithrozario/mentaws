@@ -1,32 +1,35 @@
 import json
 import getpass
 import configparser
+import tempfile
 import sys
 import os
 
-from .exceptions import InvalidPasswordError
 from .aws_operations import get_aws_config, get_token, get_region
 from .operations import (
     load_conf_file,
     setup_conf_file,
     encrypt_creds_file,
-    decrypt_creds_file,
     write_creds_file,
     get_platform_config,
-    load_profiles
+    load_profiles,
+    decrypt_credentials,
+    check_new_profiles
 )
 
 
 def main():
 
-    if "setup" in sys.argv[1:]:
+    if sys.argv[1] == "setup":
         setup()
-    elif "refresh" in sys.argv[1:]:
+    elif sys.argv[1] == "refresh":
         refresh()
-    elif "reencrypt" in sys.argv[1:]:
+    elif sys.argv[1] == "reencrypt":
         reencrypt()
-    elif "list" in sys.argv[1:]:
+    elif sys.argv[1] == "list":
         list_profiles()
+    elif sys.argv[1] == "remove":
+        remove()
     else:
         print(
             """
@@ -35,9 +38,13 @@ A cli-tool that encrypts your aws credentials file, and replaces it with tempora
 
 Usage   : sementara <command> <args>
 
-Commands: setup      first time setup to encrypt credentials file, and generate temporary tokens
-          refresh    refresh credentials
-          reencrypt  change the password used for encryption
+Commands: setup           first time setup
+          refresh         refresh new STS tokens
+          reencrypt       change the password used for encryption
+          list            list all profiles currently encrypted by sementera
+          remove          remove profile from active profiles
+
+WARNING: Sementara does not store your encryption password anywhere. If you forget it, you'll lose access to your credentials.
         """
         )
 
@@ -74,16 +81,32 @@ def refresh():
     platform_config = get_platform_config()
     config = load_conf_file(platform_config)
 
-    creds = decrypt_credentials(
+    creds, password = decrypt_credentials(
         platform_config=platform_config,
         config=config,
+        return_type="ConfigParserWithPassword"
     )
 
-    # get AWS configuration
+    # Check if there are new profiles
+    new_profiles = check_new_profiles()
+    if len(new_profiles.keys()) > 0:
+        print(f"Found: {len(new_profiles.keys())} new profiles 👷🏿")
+        # replace/add new profile
+        creds.read_dict(new_profiles)
+        load_profiles(platform_config, creds.sections())
+
+        # encrypt new credentials file
+        encrypt_creds_file(
+            platform_config=platform_config,
+            password=password,
+            salt=config["salt"],
+            creds=creds.encode('utf-8')
+        )
+
+    # Generate temp credentials
     aws_config = get_aws_config(platform_config)
     temp_config = configparser.ConfigParser()
 
-    # Generate temp credentials
     print("Generating temporary tokens...")
     print(f"\n👷🏿 Profile{' ' * 20}⏰ Tokens expire at")
     for section in creds.sections():
@@ -127,35 +150,13 @@ def reencrypt():
             creds=creds.encode('utf-8')
         )
         print(
-            "Password changed, please note this change is irreversible."
+            "Password changed, this change is irreversible."
         )
     else:
         print("Passwords do no match, aborting...")
         exit(1)
 
     return
-
-
-def decrypt_credentials(platform_config, config, password_prompt="🔑 Enter password:", return_type=None):
-
-    # Decrypt credentials file
-    p = getpass.getpass(prompt=password_prompt)
-    try:
-        data = decrypt_creds_file(
-            platform_config=platform_config, password=p, salt=config["salt"]
-        )
-    except InvalidPasswordError:
-        print("🛑 Invalid password, exiting 🛑")
-        exit(1)
-
-    creds = configparser.ConfigParser()
-    creds.read_string(data)
-    load_profiles(platform_config, creds.sections())
-
-    if return_type == "str":
-        return data
-
-    return creds
 
 
 def list_profiles():
@@ -171,3 +172,42 @@ def list_profiles():
     print(f"\nFound total of {k+1} profiles 👷🏿\n")
 
     return
+
+
+def remove():
+
+    try:
+        profile_name = sys.argv[2]
+    except IndexError:
+        print(f"Please provide the profile to remove")
+        exit(1)
+
+    platform_config = get_platform_config()
+    config = load_conf_file(platform_config)
+
+    creds, password = decrypt_credentials(
+        platform_config=platform_config,
+        config=config,
+        return_type="ConfigParserWithPassword"
+    )
+
+    if creds.remove_section(profile_name):
+        with tempfile.TemporaryFile(mode='w+') as data:
+            creds.write(data)
+            data.seek(0)
+            creds_text = data.read()
+        encrypt_creds_file(
+            platform_config=platform_config,
+            password=password,
+            salt=config["salt"],
+            creds=creds_text.encode('utf-8')
+        )
+        print(f"Profile {sys.argv[2]} "
+              f"removed from encrypted credentials file, you will no longer request tokens for this profile")
+    else:
+        print(f"Profile {sys.argv[2]} not found in encrypted credentials file")
+
+    load_profiles(platform_config, creds.sections())
+
+    return
+

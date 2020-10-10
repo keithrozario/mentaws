@@ -17,7 +17,7 @@ def get_platform_config() -> dict:
     :return: platform_config : dict of platform configurations (aws_directory, credentials file)
     """
     from .config import config
-    platform_config = config[platform.system()]
+    platform_config = config[platform.system()]  # platform.system() is a built-in python functionality
 
     user_name = getpass.getuser()
     platform_config['aws_directory'] = platform_config['aws_directory'].format(user_name=user_name)
@@ -139,3 +139,62 @@ def write_creds_file(config: ConfigParser, platform_config: dict):
         config.write(creds_file)
 
     return
+
+
+def decrypt_credentials(platform_config, config, password_prompt="🔑 Enter password:", return_type: str = "ConfigParser"):
+    """
+
+    :param platform_config: Platform configuration
+    :param config: Sementara configuration
+    :param password_prompt: Prompt for password configuration
+    :param return_type: String specifying return values
+    :return:
+    """
+
+    # Decrypt credentials file
+    p = getpass.getpass(prompt=password_prompt)
+    creds = ConfigParser()
+    data = ""
+
+    try:
+        data = decrypt_creds_file(
+            platform_config=platform_config, password=p, salt=config["salt"]
+        )
+        creds.read_string(data)
+        load_profiles(platform_config, creds.sections())
+    except InvalidPasswordError:
+        print("🛑 Invalid password, exiting 🛑")
+        exit(1)
+
+    if return_type == "ConfigParser":
+        return creds
+    if return_type == "str":
+        return data
+    if return_type == "ConfigParserWithPassword":
+        return creds, p
+    if return_type == "strWithPassword":
+        return data, p
+
+    return creds
+
+
+def check_new_profiles() -> dict:
+    platform_config = get_platform_config()
+    cred_file_path = os.path.join(platform_config['aws_directory'], 'credentials')
+
+    creds = ConfigParser()
+
+    with open(cred_file_path, 'r') as cred_file:
+        data = cred_file.read()
+        creds.read_string(data)
+
+    new_profiles = dict()
+    for section in creds.sections():
+        key_id = creds.get(section, "aws_access_key_id")
+        if key_id[:4] == 'AKIA':
+            new_section = {}
+            for option in creds.options(section):
+                new_section[option] = creds.get(section, option)
+            new_profiles[section] = new_section
+
+    return new_profiles
