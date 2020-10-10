@@ -7,6 +7,6 @@ config = {
         "creds_file_name": "credentials",
         "encrypted_file_name": "credentials.enc",
         "config_file_name": "config",
-        "profile_file_name": "sementara.profiles"
+        "profile_file_name": "sementara.profiles",
     },
 }

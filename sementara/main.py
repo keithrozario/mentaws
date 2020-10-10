@@ -14,7 +14,7 @@ from .operations import (
     get_platform_config,
     load_profiles,
     decrypt_credentials,
-    check_new_profiles
+    check_new_profiles,
 )
 
 
@@ -63,7 +63,9 @@ def setup():
         p = getpass.getpass(prompt="🔑 Enter encryption password: ")
         p2 = getpass.getpass(prompt="🔑 Confirm Password: ")
         if p == p2:
-            encrypt_creds_file(platform_config=platform_config, password=p, salt=config["salt"])
+            encrypt_creds_file(
+                platform_config=platform_config, password=p, salt=config["salt"]
+            )
             print(
                 "AWS credentials encrypted, run sementara again to generate new creds"
             )
@@ -84,7 +86,7 @@ def refresh():
     creds, password = decrypt_credentials(
         platform_config=platform_config,
         config=config,
-        return_type="ConfigParserWithPassword"
+        return_type="ConfigParserWithPassword",
     )
 
     # Check if there are new profiles
@@ -100,7 +102,7 @@ def refresh():
             platform_config=platform_config,
             password=password,
             salt=config["salt"],
-            creds=creds.encode('utf-8')
+            creds=creds.encode("utf-8"),
         )
 
     # Generate temp credentials
@@ -136,7 +138,7 @@ def reencrypt():
         platform_config=platform_config,
         config=config,
         password_prompt="🔑 Enter **current** password:",
-        return_type="str"
+        return_type="str",
     )
 
     p = getpass.getpass(prompt="🔑 Enter **NEW** password: ")
@@ -147,11 +149,9 @@ def reencrypt():
             platform_config=platform_config,
             password=p,
             salt=config["salt"],
-            creds=creds.encode('utf-8')
+            creds=creds.encode("utf-8"),
         )
-        print(
-            "Password changed, this change is irreversible."
-        )
+        print("Password changed, this change is irreversible.")
     else:
         print("Passwords do no match, aborting...")
         exit(1)
@@ -162,8 +162,10 @@ def reencrypt():
 def list_profiles():
 
     platform_config = get_platform_config()
-    prof_file_path = os.path.join(platform_config['aws_directory'], platform_config['profile_file_name'])
-    with open(prof_file_path, 'r') as prof_file:
+    prof_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["profile_file_name"]
+    )
+    with open(prof_file_path, "r") as prof_file:
         profiles = json.loads(prof_file.read())
 
     for k, profile in enumerate(profiles.keys()):
@@ -188,11 +190,11 @@ def remove():
     creds, password = decrypt_credentials(
         platform_config=platform_config,
         config=config,
-        return_type="ConfigParserWithPassword"
+        return_type="ConfigParserWithPassword",
     )
 
     if creds.remove_section(profile_name):
-        with tempfile.TemporaryFile(mode='w+') as data:
+        with tempfile.TemporaryFile(mode="w+") as data:
             creds.write(data)
             data.seek(0)
             creds_text = data.read()
@@ -200,14 +202,15 @@ def remove():
             platform_config=platform_config,
             password=password,
             salt=config["salt"],
-            creds=creds_text.encode('utf-8')
+            creds=creds_text.encode("utf-8"),
         )
-        print(f"Profile {sys.argv[2]} "
-              f"removed from encrypted credentials file, you will no longer request tokens for this profile")
+        print(
+            f"Profile {sys.argv[2]} "
+            f"removed from encrypted credentials file, you will no longer request tokens for this profile"
+        )
     else:
         print(f"Profile {sys.argv[2]} not found in encrypted credentials file")
 
     load_profiles(platform_config, creds.sections())
 
     return
-

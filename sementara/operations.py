@@ -17,10 +17,15 @@ def get_platform_config() -> dict:
     :return: platform_config : dict of platform configurations (aws_directory, credentials file)
     """
     from .config import config
-    platform_config = config[platform.system()]  # platform.system() is a built-in python functionality
+
+    platform_config = config[
+        platform.system()
+    ]  # platform.system() is a built-in python functionality
 
     user_name = getpass.getuser()
-    platform_config['aws_directory'] = platform_config['aws_directory'].format(user_name=user_name)
+    platform_config["aws_directory"] = platform_config["aws_directory"].format(
+        user_name=user_name
+    )
 
     for key in config.keys():
         if key.startswith("default"):
@@ -32,10 +37,12 @@ def get_platform_config() -> dict:
 def load_conf_file(platform_config: dict) -> dict:
     "Return platform configuration"
 
-    conf_file_path = os.path.join(platform_config['aws_directory'], platform_config['conf_file_name'])
+    conf_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["conf_file_name"]
+    )
 
     try:
-        with open(conf_file_path, 'r') as config_file:
+        with open(conf_file_path, "r") as config_file:
             config = json.loads(config_file.read())
     except FileNotFoundError:
         raise FileNotFoundError
@@ -46,8 +53,10 @@ def load_profiles(platform_config: dict, profiles: list) -> dict:
     "Loads missing profiles into profile file"
 
     profile_details = {}
-    prof_file_path = os.path.join(platform_config['aws_directory'], platform_config['profile_file_name'])
-    with open(prof_file_path, 'w') as prof_file:
+    prof_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["profile_file_name"]
+    )
+    with open(prof_file_path, "w") as prof_file:
         for profile in profiles:
             profile_details[profile] = {}
         prof_file.write(json.dumps(profile_details))
@@ -55,7 +64,7 @@ def load_profiles(platform_config: dict, profiles: list) -> dict:
     return
 
 
-def get_key(password: bytes, salt: bytes, n=2**18, r=8, p=1, length=32) -> Fernet:
+def get_key(password: bytes, salt: bytes, n=2 ** 18, r=8, p=1, length=32) -> Fernet:
     """
     :param password: Password in bytes
     :param salt: salt in bytes
@@ -66,32 +75,31 @@ def get_key(password: bytes, salt: bytes, n=2**18, r=8, p=1, length=32) -> Ferne
     :return: Fernet key for encryption
     """
 
-    kdf = Scrypt(
-        salt=salt,
-        length=length,
-        n=n,
-        r=r,
-        p=p,
-        backend=backend
-    )
+    kdf = Scrypt(salt=salt, length=length, n=n, r=r, p=p, backend=backend)
     key = base64.urlsafe_b64encode(kdf.derive(password))
     encryption_key = Fernet(key)
 
     return encryption_key
 
 
-def encrypt_creds_file(password: str, salt: str, platform_config: dict, creds: bytes = ""):
+def encrypt_creds_file(
+    password: str, salt: str, platform_config: dict, creds: bytes = ""
+):
 
-    creds_file_path = os.path.join(platform_config['aws_directory'], platform_config['creds_file_name'])
-    encrypted_file_path = os.path.join(platform_config['aws_directory'], platform_config['encrypted_file_name'])
-    key = get_key(password=password.encode('utf-8'), salt=salt.encode('utf-8'))
+    creds_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["creds_file_name"]
+    )
+    encrypted_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["encrypted_file_name"]
+    )
+    key = get_key(password=password.encode("utf-8"), salt=salt.encode("utf-8"))
 
     if creds == "":
-        with open(creds_file_path, 'rb') as input_file:
+        with open(creds_file_path, "rb") as input_file:
             creds = input_file.read()
 
     enc_data = key.encrypt(creds)
-    with open(encrypted_file_path, 'wb') as output_file:
+    with open(encrypted_file_path, "wb") as output_file:
         output_file.write(enc_data)
 
     return
@@ -99,13 +107,15 @@ def encrypt_creds_file(password: str, salt: str, platform_config: dict, creds: b
 
 def decrypt_creds_file(password: str, salt: str, platform_config: dict) -> str:
 
-    encrypted_file_path = os.path.join(platform_config['aws_directory'], platform_config['encrypted_file_name'])
-    key = get_key(password=password.encode('utf-8'), salt=salt.encode('utf-8'))
+    encrypted_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["encrypted_file_name"]
+    )
+    key = get_key(password=password.encode("utf-8"), salt=salt.encode("utf-8"))
 
-    with open(encrypted_file_path, 'rb') as encrypted_file:
+    with open(encrypted_file_path, "rb") as encrypted_file:
         encrypted_data = encrypted_file.read()
         try:
-            data = key.decrypt(encrypted_data).decode('utf-8')
+            data = key.decrypt(encrypted_data).decode("utf-8")
         except InvalidToken:
             raise InvalidPasswordError("Decryption Password is not valid")
 
@@ -114,18 +124,20 @@ def decrypt_creds_file(password: str, salt: str, platform_config: dict) -> str:
 
 def setup_conf_file(platform_config: dict) -> dict:
 
-    conf_file_path = os.path.join(platform_config['aws_directory'], platform_config['conf_file_name'])
+    conf_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["conf_file_name"]
+    )
 
     salt = os.urandom(32)
-    salt_b64 = base64.b64encode(salt).decode('utf-8')
+    salt_b64 = base64.b64encode(salt).decode("utf-8")
 
     config = {
         "salt": salt_b64,
-        "default_duration_seconds": platform_config['default_duration_seconds'],
-        "default_region": platform_config['default_region']
+        "default_duration_seconds": platform_config["default_duration_seconds"],
+        "default_region": platform_config["default_region"],
     }
 
-    with open(conf_file_path, 'w') as config_file:
+    with open(conf_file_path, "w") as config_file:
         config_file.write(json.dumps(config))
 
     return config
@@ -133,15 +145,22 @@ def setup_conf_file(platform_config: dict) -> dict:
 
 def write_creds_file(config: ConfigParser, platform_config: dict):
 
-    creds_file_path = os.path.join(platform_config['aws_directory'], platform_config['creds_file_name'])
+    creds_file_path = os.path.join(
+        platform_config["aws_directory"], platform_config["creds_file_name"]
+    )
 
-    with open(creds_file_path, 'w') as creds_file:
+    with open(creds_file_path, "w") as creds_file:
         config.write(creds_file)
 
     return
 
 
-def decrypt_credentials(platform_config, config, password_prompt="🔑 Enter password:", return_type: str = "ConfigParser"):
+def decrypt_credentials(
+    platform_config,
+    config,
+    password_prompt="🔑 Enter password:",
+    return_type: str = "ConfigParser",
+):
     """
 
     :param platform_config: Platform configuration
@@ -180,18 +199,18 @@ def decrypt_credentials(platform_config, config, password_prompt="🔑 Enter pas
 
 def check_new_profiles() -> dict:
     platform_config = get_platform_config()
-    cred_file_path = os.path.join(platform_config['aws_directory'], 'credentials')
+    cred_file_path = os.path.join(platform_config["aws_directory"], "credentials")
 
     creds = ConfigParser()
 
-    with open(cred_file_path, 'r') as cred_file:
+    with open(cred_file_path, "r") as cred_file:
         data = cred_file.read()
         creds.read_string(data)
 
     new_profiles = dict()
     for section in creds.sections():
         key_id = creds.get(section, "aws_access_key_id")
-        if key_id[:4] == 'AKIA':
+        if key_id[:4] == "AKIA":
             new_section = {}
             for option in creds.options(section):
                 new_section[option] = creds.get(section, option)
