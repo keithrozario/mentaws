@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sementara"
-version = "0.4.0"
+version = "0.4.3"
 description = "Temporary AWS credentials"
 authors = ["keithrozario <keith@keithrozario.com>"]
 

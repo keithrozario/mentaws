@@ -199,13 +199,10 @@ def decrypt_credentials(
 
 def check_new_profiles() -> dict:
     platform_config = get_platform_config()
+
     cred_file_path = os.path.join(platform_config["aws_directory"], "credentials")
-
     creds = ConfigParser()
-
-    with open(cred_file_path, "r") as cred_file:
-        data = cred_file.read()
-        creds.read_string(data)
+    creds.read(filenames=[cred_file_path], encoding='utf-8')
 
     new_profiles = dict()
     for section in creds.sections():
