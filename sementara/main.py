@@ -32,7 +32,12 @@ def main():
     elif sys.argv[1] == "list":
         list_profiles()
     elif sys.argv[1] == "remove":
-        remove()
+        try:
+            profile_name = sys.argv[2]
+            remove(profile_name)
+        except IndexError:
+            print(f"Please provide the profile to remove")
+            exit(1)
     else:
         print(
             """
@@ -52,6 +57,8 @@ WARNING: Sementara does not store your encryption password anywhere. If you forg
         )
 
     exit(0)
+
+    return True
 
 
 def setup():
@@ -128,7 +135,7 @@ def reencrypt():
     creds = decrypt_credentials(
         platform_config=platform_config,
         config=config,
-        password_prompt="🔑 Enter **current** password:",
+        password_prompt="🔑 Enter **current** password: ",
         return_type="str",
     )
 
@@ -163,16 +170,13 @@ def list_profiles():
 
     print(f"\nFound total of {k+1} profiles 👷🏿\n")
 
-    return
+    return {
+        "num_profiles": k+1,
+        "profiles": profiles.keys()
+        }
 
 
-def remove():
-
-    try:
-        profile_name = sys.argv[2]
-    except IndexError:
-        print(f"Please provide the profile to remove")
-        exit(1)
+def remove(profile_name: str):
 
     config = load_conf_file(platform_config)
 
@@ -194,15 +198,15 @@ def remove():
             creds=creds_text.encode("utf-8"),
         )
         print(
-            f"Profile {sys.argv[2]} "
+            f"Profile {profile_name} "
             f"removed from encrypted credentials file, you will no longer request tokens for this profile"
         )
     else:
-        print(f"Profile {sys.argv[2]} not found in encrypted credentials file")
+        print(f"Profile {profile_name} not found in encrypted credentials file")
 
     load_profiles(platform_config, creds.sections())
 
-    return
+    return list_profiles()
 
 
 def gen_temp_tokens(platform_config: dict, creds: configparser.ConfigParser, config: dict):

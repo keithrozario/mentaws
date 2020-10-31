@@ -1,13 +1,10 @@
 import platform
 from configparser import ConfigParser
 import getpass
+import secrets
 import base64
 import json
 import os
-from cryptography.fernet import Fernet
-from cryptography.hazmat.backends.openssl import backend
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-from cryptography.fernet import InvalidToken
 
 from .exceptions import InvalidPasswordError
 
@@ -64,71 +61,13 @@ def load_profiles(platform_config: dict, profiles: list) -> dict:
     return
 
 
-def get_key(password: bytes, salt: bytes, n=2 ** 18, r=8, p=1, length=32) -> Fernet:
-    """
-    :param password: Password in bytes
-    :param salt: salt in bytes
-    :param n: cost
-    :param r: block_size
-    :param p: Parallelization factor
-    :param length: Length of key in bytes
-    :return: Fernet key for encryption
-    """
-
-    kdf = Scrypt(salt=salt, length=length, n=n, r=r, p=p, backend=backend)
-    key = base64.urlsafe_b64encode(kdf.derive(password))
-    encryption_key = Fernet(key)
-
-    return encryption_key
-
-
-def encrypt_creds_file(
-    password: str, salt: str, platform_config: dict, creds: bytes = ""
-):
-
-    creds_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["creds_file_name"]
-    )
-    encrypted_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["encrypted_file_name"]
-    )
-    key = get_key(password=password.encode("utf-8"), salt=salt.encode("utf-8"))
-
-    if creds == "":
-        with open(creds_file_path, "rb") as input_file:
-            creds = input_file.read()
-
-    enc_data = key.encrypt(creds)
-    with open(encrypted_file_path, "wb") as output_file:
-        output_file.write(enc_data)
-
-    return
-
-
-def decrypt_creds_file(password: str, salt: str, platform_config: dict) -> str:
-
-    encrypted_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["encrypted_file_name"]
-    )
-    key = get_key(password=password.encode("utf-8"), salt=salt.encode("utf-8"))
-
-    with open(encrypted_file_path, "rb") as encrypted_file:
-        encrypted_data = encrypted_file.read()
-        try:
-            data = key.decrypt(encrypted_data).decode("utf-8")
-        except InvalidToken:
-            raise InvalidPasswordError("Decryption Password is not valid")
-
-    return data
-
-
 def setup_conf_file(platform_config: dict) -> dict:
 
     conf_file_path = os.path.join(
         platform_config["aws_directory"], platform_config["conf_file_name"]
     )
 
-    salt = os.urandom(32)
+    salt = secrets.token_bytes(nbytes=32)
     salt_b64 = base64.b64encode(salt).decode("utf-8")
 
     config = {
@@ -158,7 +97,7 @@ def write_creds_file(config: ConfigParser, platform_config: dict):
 def decrypt_credentials(
     platform_config,
     config,
-    password_prompt="🔑 Enter password:",
+    password_prompt="🔑 Enter password: ",
     return_type: str = "ConfigParser",
 ):
     """
