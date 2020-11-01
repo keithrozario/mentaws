@@ -6,134 +6,76 @@ import base64
 import json
 import os
 
+import records
+
+from .config import get_platform_config
+from .cryptographic_operations import setup_key, encrypt
+
 from .exceptions import InvalidPasswordError
 
 
-def get_platform_config() -> dict:
+# General configuration
+config = get_platform_config()
+table_name = config['default_table_name']
+app_name = config['default_app_name']
+key_name = config['encryption_key_name']
+
+sementara_db_path = os.path.join(
+    config["aws_directory"], config["database_file"]
+)
+creds_file_path = os.path.join(
+    config["aws_directory"], config["creds_file_name"]
+)
+
+
+def setup_new_db() -> bool:
     """
-    :return: platform_config : dict of platform configurations (aws_directory, credentials file)
-    """
-    from .config import config
-
-    platform_config = config[
-        platform.system()
-    ]  # platform.system() is a built-in python functionality
-
-    user_name = getpass.getuser()
-    platform_config["aws_directory"] = platform_config["aws_directory"].format(
-        user_name=user_name
-    )
-
-    for key in config.keys():
-        if key.startswith("default"):
-            platform_config[key] = config[key]
-
-    return platform_config
-
-
-def load_conf_file(platform_config: dict) -> dict:
-    "Return platform configuration"
-
-    conf_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["conf_file_name"]
-    )
-
-    try:
-        with open(conf_file_path, "r") as config_file:
-            config = json.loads(config_file.read())
-    except FileNotFoundError:
-        raise FileNotFoundError
-    return config
-
-
-def load_profiles(platform_config: dict, profiles: list) -> dict:
-    "Loads missing profiles into profile file"
-
-    profile_details = {}
-    prof_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["profile_file_name"]
-    )
-    with open(prof_file_path, "w") as prof_file:
-        for profile in profiles:
-            profile_details[profile] = {}
-        prof_file.write(json.dumps(profile_details))
-
-    return
-
-
-def setup_conf_file(platform_config: dict) -> dict:
-
-    conf_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["conf_file_name"]
-    )
-
-    salt = secrets.token_bytes(nbytes=32)
-    salt_b64 = base64.b64encode(salt).decode("utf-8")
-
-    config = {
-        "salt": salt_b64,
-        "default_duration_seconds": platform_config["default_duration_seconds"],
-        "default_region": platform_config["default_region"],
-    }
-
-    with open(conf_file_path, "w") as config_file:
-        config_file.write(json.dumps(config))
-
-    return config
-
-
-def write_creds_file(config: ConfigParser, platform_config: dict):
-
-    creds_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["creds_file_name"]
-    )
-
-    with open(creds_file_path, "w") as creds_file:
-        config.write(creds_file)
-
-    return
-
-
-def decrypt_credentials(
-    platform_config,
-    config,
-    password_prompt="🔑 Enter password: ",
-    return_type: str = "ConfigParser",
-):
+    Creates a new sqlite database, and populates it with the credentials from the creds file
     """
 
-    :param platform_config: Platform configuration
-    :param config: Sementara configuration
-    :param password_prompt: Prompt for password configuration
-    :param return_type: String specifying return values
-    :return:
-    """
+    if not os.path.isfile(sementara_db_path):
 
-    # Decrypt credentials file
-    p = getpass.getpass(prompt=password_prompt)
-    creds = ConfigParser()
-    data = ""
+        # Create database
+        db = records.Database(f'sqlite:////{sementara_db_path}')
+        db.query(f'DROP TABLE IF EXISTS {table_name}')
+        db.query(f'CREATE TABLE {table_name} (profile text PRIMARY KEY, \
+                                              aws_access_key_id text NOT NULL, \
+                                              aws_secret_access_key text NOT NULL \
+                                            )')
 
-    try:
-        data = decrypt_creds_file(
-            platform_config=platform_config, password=p, salt=config["salt"]
-        )
-        creds.read_string(data)
-        load_profiles(platform_config, creds.sections())
-    except InvalidPasswordError:
-        print("🛑 Invalid password, exiting 🛑")
-        exit(1)
+        # setup encryption key
+        setup_key(app_name, key_name)
 
-    if return_type == "ConfigParser":
-        return creds
-    if return_type == "str":
-        return data
-    if return_type == "ConfigParserWithPassword":
-        return creds, p
-    if return_type == "strWithPassword":
-        return data, p
+        # Read credentials from existing file
+        creds = ConfigParser()
+        with open(creds_file_path, 'r') as creds_file:
+            creds.read_string(creds_file.read())
+        
+        # Write out to database
+        for k, section in enumerate(creds.sections()):
+            profile = section
+            aws_access_key_id = creds.get(section, 'aws_access_key_id')
+            
+            # Encrypt secret key
+            aws_secret_access_key = encrypt(
+                plaintext=creds.get(section, 'aws_secret_access_key'),
+                app_name=app_name,
+                key_name=key_name
+            )
 
-    return creds
+            db.query(
+                f'INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key) VALUES(:profile, :aws_access_key_id, :aws_secret_access_key)',
+                profile=profile, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
+            )
+            print(f"{profile:25} profile loaded into database")
+
+        print(f"\nLoaded {k} profiles into sementara 👷🏿")
+    else:
+
+        print(f"Sementara already setup")
+
+    return True
+
 
 
 def check_new_profiles() -> dict:

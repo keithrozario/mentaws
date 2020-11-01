@@ -1,65 +1,64 @@
+import secrets
+import base64
+import keyring
 from cryptography.fernet import Fernet
-from cryptography.hazmat.backends.openssl import backend
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.fernet import InvalidToken
 
 
-def get_key(password: bytes, salt: bytes, n=2 ** 18, r=8, p=1, length=32) -> Fernet:
+def gen_key() -> str:
     """
-    :param password: Password in bytes
-    :param salt: salt in bytes
-    :param n: cost
-    :param r: block_size
-    :param p: Parallelization factor
-    :param length: Length of key in bytes
-    :return: Fernet key for encryption
+    Use secrets.token_bytes to generate keyt, and return base64 encoded key (as string)
     """
+    key = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode('utf-8')
+    return key
 
-    kdf = Scrypt(salt=salt, length=length, n=n, r=r, p=p, backend=backend)
-    key = base64.urlsafe_b64encode(kdf.derive(password))
-    encryption_key = Fernet(key)
 
+def setup_key(app_name: str, key_name: str) -> bool:
+    """
+    Store key onto keychain
+    """
+    keyring.set_password(app_name, key_name, gen_key())
+    return True
+
+
+
+def get_key(app_name: str, key_name: str) -> Fernet:
+    """
+    Args:
+        app_name: Name of application in Keychain
+        key_name: Name of key in KeyChain
+    Return
+        encryption_key: Fernet encryption key
+    """
+    key = keyring.get_password(app_name, key_name)
+    encryption_key = Fernet(key.encode('utf-8'))
     return encryption_key
 
 
-def encrypt_creds_file(
-    password: str, salt: str, platform_config: dict, creds: bytes = "", initialize: bool = False
-):
+def decrypt(encrypted_string: str, app_name: str, key_name: str) -> str:
+    """
+    Args:
+        encrypted_string: encrypted string
+        app_name: Name of application in Keychain
+        key_name: Name of key in KeyChain
+    return:
+        decrypted_string: string decrypted with single key
+    """
 
-    creds_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["creds_file_name"]
-    )
-    encrypted_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["encrypted_file_name"]
-    )
-    key = get_key(password=password.encode("utf-8"), salt=salt.encode("utf-8"))
-
-    if initialize:
-        with open(creds_file_path, "rb") as input_file:
-            creds = input_file.read()
-    else:
-        # use the creds passed into the function
-        pass
-
-    enc_data = key.encrypt(creds)
-    with open(encrypted_file_path, "wb") as output_file:
-        output_file.write(enc_data)
-
-    return
+    key = get_key(app_name, key_name)
+    decrypted_string = key.decrypt(encrypted_string.encode('utf-8'))
+    return decrypted_string.decode('utf-8')
 
 
-def decrypt_creds_file(password: str, salt: str, platform_config: dict) -> str:
+def encrypt(plaintext: str, app_name: str, key_name: str) -> str:
+    """
+    Args:
+        plaintext: plaintext to be encrypted
+    return:
+        encrypted_string: encrypted_string
+    """
 
-    encrypted_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["encrypted_file_name"]
-    )
-    key = get_key(password=password.encode("utf-8"), salt=salt.encode("utf-8"))
+    key = get_key(app_name, key_name)
+    encrypted_string = key.encrypt(plaintext.encode('utf-8'))
 
-    with open(encrypted_file_path, "rb") as encrypted_file:
-        encrypted_data = encrypted_file.read()
-        try:
-            data = key.decrypt(encrypted_data).decode("utf-8")
-        except InvalidToken:
-            raise InvalidPasswordError("Decryption Password is not valid")
-
-    return data
+    return encrypted_string.decode('utf-8')
