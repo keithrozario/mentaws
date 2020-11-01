@@ -5,7 +5,7 @@ config = {
     "default_duration_seconds": 14400,
     "default_region": "us-east-1",
     "default_app_name": "sementara",
-    "default_table_name": "aws_credentials",
+    "default_table_name": "creds",
     "Darwin": {
         "aws_directory": "/Users/{user_name}/.aws",
         "database_file": "sementara.db",

@@ -6,7 +6,7 @@ import sys
 import os
 
 from .aws_operations import get_aws_config, get_token, get_region
-from .operations import setup_new_db
+from .operations import setup_new_db, list_profiles_in_db
 
 def main():
 
@@ -50,6 +50,10 @@ def setup():
     setup_new_db()
     return
 
+def list_profiles():
+    list_profiles_in_db()
+    return
+    
 
 def refresh():
     

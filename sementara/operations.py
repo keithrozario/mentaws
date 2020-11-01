@@ -6,7 +6,7 @@ import base64
 import json
 import os
 
-import records
+import sqlite3
 
 from .config import get_platform_config
 from .cryptographic_operations import setup_key, encrypt
@@ -36,12 +36,13 @@ def setup_new_db() -> bool:
     if not os.path.isfile(sementara_db_path):
 
         # Create database
-        db = records.Database(f'sqlite:////{sementara_db_path}')
-        db.query(f'DROP TABLE IF EXISTS {table_name}')
-        db.query(f'CREATE TABLE {table_name} (profile text PRIMARY KEY, \
-                                              aws_access_key_id text NOT NULL, \
-                                              aws_secret_access_key text NOT NULL \
-                                            )')
+        conn = sqlite3.connect(sementara_db_path)
+        db = conn.cursor()
+        db.execute(f'DROP TABLE IF EXISTS {table_name}')
+        db.execute(f'CREATE TABLE {table_name} (profile text PRIMARY KEY, \
+                                    aws_access_key_id text NOT NULL, \
+                                    aws_secret_access_key text NOT NULL \
+                                    )')
 
         # setup encryption key
         setup_key(app_name, key_name)
@@ -63,12 +64,14 @@ def setup_new_db() -> bool:
                 key_name=key_name
             )
 
-            db.query(
-                f'INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key) VALUES(:profile, :aws_access_key_id, :aws_secret_access_key)',
-                profile=profile, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
+            db.execute(
+                f'INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key) VALUES(?,?,?)',
+                (profile, aws_access_key_id, aws_secret_access_key)
             )
-            print(f"{profile:25} profile loaded into database")
 
+            print(f"{profile:25} profile loaded into database")
+        conn.commit()
+        conn.close()
         print(f"\nLoaded {k} profiles into sementara 👷🏿")
     else:
 
@@ -77,6 +80,22 @@ def setup_new_db() -> bool:
     return True
 
 
+def list_profiles_in_db():
+    """
+    List all profiles in database
+    """
+    conn = sqlite3.connect(sementara_db_path)
+    conn.row_factory = sqlite3.Row
+    db = conn.cursor()
+    db.execute(f'SELECT profile FROM {table_name}')
+
+    print("\n")
+    for k, row in enumerate(db):
+        print(f"{k+1:2}. {row['profile']}")
+
+    print(f"\nFound total of {k+1} profiles 👷🏿\n")
+
+    return
 
 def check_new_profiles() -> dict:
     platform_config = get_platform_config()
