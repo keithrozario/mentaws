@@ -45,6 +45,8 @@ def setup_new_db() -> bool:
                                     aws_access_key_id text NOT NULL, \
                                     aws_secret_access_key text NOT NULL \
                                     )')
+        conn.commit()
+        conn.close()
 
         # setup encryption key
         setup_key(app_name, key_name)
@@ -55,34 +57,15 @@ def setup_new_db() -> bool:
             creds.read_string(creds_file.read())
         
         # Write out to database
-        for k, section in enumerate(creds.sections()):
-            profile = section
-            aws_access_key_id = creds.get(section, 'aws_access_key_id')
-            
-            # Encrypt secret key
-            aws_secret_access_key = encrypt(
-                plaintext=creds.get(section, 'aws_secret_access_key'),
-                app_name=app_name,
-                key_name=key_name
-            )
+        write_creds_to_db(creds)
 
-            db.execute(
-                f'INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key) VALUES(?,?,?)',
-                (profile, aws_access_key_id, aws_secret_access_key)
-            )
-
-            print(f"{profile:25} profile loaded into database")
-        conn.commit()
-        conn.close()
-        print(f"\nLoaded {k} profiles into sementara 👷🏿")
     else:
-
         print(f"Sementara already setup")
 
     return True
 
 
-def list_profiles_in_db():
+def list_profiles_in_db(print_profiles: bool=True) -> List[str]:
     """
     List all profiles in database
     """
@@ -92,12 +75,18 @@ def list_profiles_in_db():
     db.execute(f'SELECT profile FROM {table_name}')
 
     print("\n")
+    profiles = list()
     for k, row in enumerate(db):
-        print(f"{k+1:2}. {row['profile']}")
+        profiles.append(row['profile'])
+        if print_profiles:
+            print(f"{k+1:2}. {row['profile']}")
 
-    print(f"\nFound total of {k+1} profiles 👷🏿\n")
+    if print_profiles:
+        print(f"\nFound total of {k+1} profiles 👷🏿 in database\n")
+    
+    conn.close()
 
-    return
+    return profiles
 
 def get_plaintext_credentials(profiles: List[str]=[]) -> List[dict]:
 
@@ -127,28 +116,92 @@ def get_plaintext_credentials(profiles: List[str]=[]) -> List[dict]:
 
 
 def write_creds_file(config: ConfigParser):
-
+    
     with open(creds_file_path, "w") as creds_file:
         config.write(creds_file)
 
     return
 
 
-
 def check_new_profiles() -> dict:
-    platform_config = get_platform_config()
 
-    cred_file_path = os.path.join(platform_config["aws_directory"], "credentials")
     creds = ConfigParser()
-    creds.read(filenames=[cred_file_path], encoding='utf-8')
+    creds.read(filenames=[creds_file_path], encoding='utf-8')
+    existing_profiles = list_profiles_in_db(print_profiles=False)
 
     new_profiles = dict()
     for section in creds.sections():
         key_id = creds.get(section, "aws_access_key_id")
-        if key_id[:4] == "AKIA":
+        if key_id[:4] == "AKIA" and section not in existing_profiles:
             new_section = {}
             for option in creds.options(section):
                 new_section[option] = creds.get(section, option)
             new_profiles[section] = new_section
+    
+    # Write new profiles to database
+    if len(new_profiles.keys()) > 0:
+        print(f"Found {len(new_profiles.keys())} new profiles👷🏿 in credentials file...adding to DB")
+        new_creds = ConfigParser()
+        new_creds.read_dict(new_profiles)
+        write_creds_to_db(new_creds)
 
     return new_profiles
+
+
+def write_creds_to_db(creds: ConfigParser) -> bool:
+
+    conn = sqlite3.connect(sementara_db_path)
+    db = conn.cursor()
+    
+    for k, section in enumerate(creds.sections()):
+        profile = section
+        aws_access_key_id = creds.get(section, 'aws_access_key_id')
+        
+        # Encrypt secret key
+        aws_secret_access_key = encrypt(
+            plaintext=creds.get(section, 'aws_secret_access_key'),
+            app_name=app_name,
+            key_name=key_name
+        )
+
+        db.execute(
+            f'INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key) VALUES(?,?,?)',
+            (profile, aws_access_key_id, aws_secret_access_key)
+        )
+        print(f"{profile:25} profile loaded into database")
+    
+    print(f"\nLoaded {k+1} new profiles into sementara 👷🏿\n\n")
+    conn.commit()
+    conn.close()
+
+    return True
+
+
+def remove_profile_from_db(profile_name: str) -> bool:
+
+    conn = sqlite3.connect(sementara_db_path)
+    conn.row_factory = sqlite3.Row
+    db = conn.cursor()
+    db.execute(f'SELECT profile FROM {table_name} WHERE profile=?', (profile_name,))
+
+    try:
+        row = [item for item in db]
+        print(f"This action will delete the 👷🏿{row[0]['profile']}👷🏿 profile from sementara permanently.")
+        if yes_or_no("Are you sure you want to proceed"):
+            db.execute(f"DELETE FROM {table_name} WHERE profile = ?", (profile_name,))
+            conn.commit()
+        else:
+            print(f"Cancelled Operation, {row[0]['profile']} was NOT deleted")
+            
+    except (IndexError, KeyError):
+        print(f"No such profile found")
+
+    conn.close()
+    return True
+
+def yes_or_no(question):
+    reply = str(input(question+' (y/n): ')).lower().strip()
+    if reply[0] == 'y':
+        return True
+    else:
+        return False

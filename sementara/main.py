@@ -8,7 +8,7 @@ import os
 from typing import List
 
 from .aws_operations import get_token, get_region
-from .operations import setup_new_db, list_profiles_in_db, get_plaintext_credentials, write_creds_file
+from .operations import setup_new_db, list_profiles_in_db, get_plaintext_credentials, write_creds_file, remove_profile_from_db, check_new_profiles
 
 def main():
 
@@ -52,6 +52,7 @@ def setup():
     setup_new_db()
     return
 
+
 def list_profiles():
     list_profiles_in_db()
     return
@@ -59,15 +60,23 @@ def list_profiles():
 
 def refresh():
     
+    new_profiles = check_new_profiles()
     creds = get_plaintext_credentials()
-    # Generate temporary tokens
     gen_temp_tokens(creds)
 
-    return True
+    return 
+
+
+def remove(profile_name: str):
+    remove_profile_from_db(profile_name)
+    return
+
+
+def add_profile():
+    add_profile()
 
 
 def gen_temp_tokens(creds: List[dict]):
-
     # Generate temp credentials
     temp_config = configparser.ConfigParser()
 
@@ -86,5 +95,4 @@ def gen_temp_tokens(creds: List[dict]):
     # Replace ~/.aws/credentials
     write_creds_file(config=temp_config)
     print(f"\n\nYou're ready to go 🚀🚀 ")
-
     return
