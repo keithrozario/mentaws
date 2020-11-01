@@ -61,4 +61,4 @@ def encrypt(plaintext: str, app_name: str, key_name: str) -> str:
     key = get_key(app_name, key_name)
     encrypted_string = key.encrypt(plaintext.encode('utf-8'))
 
-    return encrypted_string.decode('utf-8')
+    return encrypted_string .decode('utf-8')

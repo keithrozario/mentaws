@@ -5,8 +5,10 @@ import tempfile
 import sys
 import os
 
-from .aws_operations import get_aws_config, get_token, get_region
-from .operations import setup_new_db, list_profiles_in_db
+from typing import List
+
+from .aws_operations import get_token, get_region
+from .operations import setup_new_db, list_profiles_in_db, get_plaintext_credentials, write_creds_file
 
 def main():
 
@@ -59,33 +61,30 @@ def refresh():
     
     creds = get_plaintext_credentials()
     # Generate temporary tokens
-    gen_temp_tokens(platform_config=platform_config,
-                    creds=creds,
-                    config=config)
+    gen_temp_tokens(creds)
 
     return True
 
 
-def gen_temp_tokens(platform_config: dict, creds: configparser.ConfigParser, config: dict):
+def gen_temp_tokens(creds: List[dict]):
 
     # Generate temp credentials
     temp_config = configparser.ConfigParser()
 
     print("Generating temporary tokens...")
-    print(f"\n👷🏿 Profile{' ' * 20}⏰ Tokens expire at")
-    for section in creds.sections():
-        region = get_region(aws_config=aws_config, config=config, section=section)
+    print(f"\n👷🏿 Profile{' ' * 20}🌎 Region:{' '*12}⏰ Tokens expire at")
+    for section in creds:
+        region = get_region(profile=section['profile'])
         temp_token = get_token(
-            key_id=creds[section]["aws_access_key_id"],
-            secret_access_key=creds[section]["aws_secret_access_key"],
-            duration_seconds=config["default_duration_seconds"],
+            key_id=section["aws_access_key_id"],
+            secret_access_key=section["aws_secret_access_key"],
             region=region,
         )
-        temp_config[section] = temp_token
-        print(f"   {section:<30}{temp_token['aws_token_expiry_time']}")
+        temp_config[section['profile']] = temp_token
+        print(f"   {section['profile']:<30}{region:<22}{temp_token['aws_token_expiry_time']}")
 
     # Replace ~/.aws/credentials
-    write_creds_file(platform_config=platform_config, config=temp_config)
+    write_creds_file(config=temp_config)
     print(f"\n\nYou're ready to go 🚀🚀 ")
 
     return

@@ -9,9 +9,11 @@ import os
 import sqlite3
 
 from .config import get_platform_config
-from .cryptographic_operations import setup_key, encrypt
+from .cryptographic_operations import setup_key, encrypt, decrypt
 
 from .exceptions import InvalidPasswordError
+
+from typing import List
 
 
 # General configuration
@@ -96,6 +98,42 @@ def list_profiles_in_db():
     print(f"\nFound total of {k+1} profiles 👷🏿\n")
 
     return
+
+def get_plaintext_credentials(profiles: List[str]=[]) -> List[dict]:
+
+    creds = list()
+
+    if len(profiles) == 0:
+        conn = sqlite3.connect(sementara_db_path)
+        conn.row_factory = sqlite3.Row
+        db = conn.cursor()
+        db.execute(f'SELECT * FROM {table_name}')
+
+    
+    for row in db:
+        temp_row = dict()
+        for key in row.keys():
+            if key == 'aws_secret_access_key':
+                temp_row[key] = decrypt(
+                    encrypted_string=row[key],
+                    app_name=app_name,
+                    key_name=key_name
+                )
+            else:
+                temp_row[key] = row[key]
+        creds.append(temp_row)
+
+    return creds
+
+
+def write_creds_file(config: ConfigParser):
+
+    with open(creds_file_path, "w") as creds_file:
+        config.write(creds_file)
+
+    return
+
+
 
 def check_new_profiles() -> dict:
     platform_config = get_platform_config()

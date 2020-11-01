@@ -3,11 +3,16 @@ import os
 from configparser import ConfigParser
 from datetime import datetime, date
 
+from .config import get_platform_config
+platform_config = get_platform_config()
+config_file_path = os.path.join(
+    platform_config["aws_directory"], platform_config["config_file_name"]
+)
 
 def get_token(
     key_id: str,
     secret_access_key: str,
-    duration_seconds: int,
+    duration_seconds: int = platform_config['default_duration_seconds'],
     region: str = "ap-southeast-1",
 ) -> dict:
     """
@@ -38,14 +43,11 @@ def get_token(
     return token
 
 
-def get_aws_config(platform_config: dict) -> ConfigParser:
+def get_aws_config() -> ConfigParser:
     """
     :param platform_config: platform configuration
     :return:
     """
-    config_file_path = os.path.join(
-        platform_config["aws_directory"], platform_config["config_file_name"]
-    )
 
     aws_config = ConfigParser()
     aws_config.read(config_file_path)
@@ -53,12 +55,13 @@ def get_aws_config(platform_config: dict) -> ConfigParser:
     return aws_config
 
 
-def get_region(aws_config: ConfigParser, section: str, config: dict) -> str:
-
+def get_region(profile: str) -> str:
+    
+    aws_config = get_aws_config()
     try:
-        region = aws_config[section]["region"]
+        region = aws_config[profile]["region"]
     except KeyError:
-        region = config["default_region"]
+        region = platform_config["default_region"]
 
     return region
 

@@ -3,7 +3,7 @@ import getpass
 
 config = {
     "default_duration_seconds": 14400,
-    "default_region": "us-east-1",
+    "default_region": "ap-southeast-1",
     "default_app_name": "sementara",
     "default_table_name": "creds",
     "Darwin": {
