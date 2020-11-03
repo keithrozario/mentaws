@@ -18,12 +18,14 @@ jobs:
       # - name: Test AWS
       #   run: aws --version
 
-      - name: Configure AWS
+      - name: Configure AWS CREDENTIALS FILE
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         run: |
           mkdir ~/.aws
           echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
+          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
+        # Copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
       
       - name: Set up Python 3.6
         uses: actions/setup-python@v2

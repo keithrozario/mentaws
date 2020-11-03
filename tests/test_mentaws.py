@@ -135,7 +135,7 @@ def test_refresh(monkeypatch):
     assert file_age.seconds < 10
 
 
-def test_profiles(monkeypatch):
+def test_add_profiles(monkeypatch):
 
     config = ConfigParser()
     creds_path = os.path.join(
