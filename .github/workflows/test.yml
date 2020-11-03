@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: Gr1N/setup-poetry@v4
+      - uses: Gr1N/setup-poetry@462ac83c852d49e282a1233c4c24c5411696e7c7
       - run: poetry install
       - uses: actions/cache@v1
         with:
