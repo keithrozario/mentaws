@@ -26,11 +26,9 @@ jobs:
       # - name: Install AWS
       #   run: |
       #     curl https://awscli.amazonaws.com/AWSCLIV2.pkg -o AWSCLIV2.pkg
-      #     sudo installer -pkg AWSCLIV2.pkg -target /
-
-      # - name: Test AWS
-      #   run: aws --version
-
+      #     sudo installer -pkg AWSCLIV2.pkg -target
+      #     aws --version
+      
       - name: Configure AWS CREDENTIALS FILE
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
