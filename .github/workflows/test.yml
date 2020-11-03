@@ -5,46 +5,35 @@ on:
 
 jobs:
   test:
-    runs-on: macos-latest
+
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-    
+        os: [macos-latest, windows-latest]
+        poetry-version: [1.0.5]
+    runs-on: ${{ matrix.os }}
     steps:
 
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: Gr1N/setup-poetry@462ac83c852d49e282a1233c4c24c5411696e7c7
-      - run: poetry install
-      - uses: actions/cache@v1
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
         with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
-      - run: poetry --version
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: View poetry --help
+        run: poetry --help
 
-      # # Runs a single command using the runners shell
-      # - name: Install AWS
+      # - name: Configure AWS CREDENTIALS FILE
+      #   env:
+      #     CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
       #   run: |
-      #     curl https://awscli.amazonaws.com/AWSCLIV2.pkg -o AWSCLIV2.pkg
-      #     sudo installer -pkg AWSCLIV2.pkg -target
-      #     aws --version
-
-      - name: Configure AWS CREDENTIALS FILE
-        env:
-          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
-        run: |
-          mkdir ~/.aws
-          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
-          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
-        # Copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
+      #     mkdir ~/.aws
+      #     echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
+      #     echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
+      #   # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
       
-      - name: Get Path
-        run: poetry env info --path
-      
-      - name: Test
-        run: poetry run pytest .
+      # - name: Test
+      #   run: poetry run pytest .
 
