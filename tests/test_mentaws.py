@@ -38,15 +38,16 @@ def mock_set_key(*args, **kwargs):
     return 
         
 
-# xfail is an optional fail.
-@pytest.mark.xfail(raises=subprocess.CalledProcessError)
-def test_initialize():
-    reset_script = os.path.join(
-        platform_config["aws_directory"], 'reset.sh'
-    )
+## THIS IS ONLY NEEDED WHEN TESTING AGAINST MY LOCAL...
+# # xfail is an optional fail.
+# @pytest.mark.xfail(raises=subprocess.CalledProcessError)
+# def test_initialize():
+#     reset_script = os.path.join(
+#         platform_config["aws_directory"], 'reset.sh'
+#     )
     
-    # undo previous setup
-    return_value = subprocess.run([reset_script], check=True, cwd=platform_config["aws_directory"])
+#     # undo previous setup
+#     return_value = subprocess.run([reset_script], check=True, cwd=platform_config["aws_directory"])
 
 
 def test_version():
