@@ -29,12 +29,12 @@ jobs:
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         run: |
-          if [ "$RUNNER_OS" == "macOS" ]; then
+          if ("$RUNNER_OS" == "macOS" ); then
             mkdir ~/.aws
             echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
             echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
             echo "SETUP on macOS complete"
-          elif [ "$RUNNER_OS" == "Windows" ]; then
+          elif ("$RUNNER_OS" == "Windows" ); then
             mkdir %USERPROFILE%\.aws
             echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials
             echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials.copy
