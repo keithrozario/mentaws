@@ -10,13 +10,13 @@ jobs:
       - uses: actions/checkout@v2
 
       # Runs a single command using the runners shell
-      # - name: Install AWS
-      #   run: |
-      #     curl https://awscli.amazonaws.com/AWSCLIV2.pkg -o AWSCLIV2.pkg
-      #     sudo installer -pkg AWSCLIV2.pkg -target /
+      - name: Install AWS
+        run: |
+          curl https://awscli.amazonaws.com/AWSCLIV2.pkg -o AWSCLIV2.pkg
+          sudo installer -pkg AWSCLIV2.pkg -target /
 
-      # - name: Test AWS
-      #   run: aws --version
+      - name: Test AWS
+        run: aws --version
 
       # - name: Set up Python 3.6
       #   uses: actions/setup-python@v2
@@ -36,4 +36,7 @@ jobs:
         run: |
           mkdir ~/.aws
           echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
+      
+      - name: Test STS
+        run: aws sts get-session-token
 
