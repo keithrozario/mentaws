@@ -39,6 +39,9 @@ jobs:
       - name: Install Dependencies
         run: poetry install
       
+      - name: Get Path
+        run: poetry env info --path
+      
       - name: Test
         run: poetry run pytest .
 

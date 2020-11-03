@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mentaws"
-version = "0.4.3"
+version = "0.4.4"
 description = "Temporary AWS credentials"
 authors = ["keithrozario <keith@keithrozario.com>"]
 
