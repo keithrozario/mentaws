@@ -57,6 +57,10 @@ def test_version():
 # setup
 def test_setup(monkeypatch):
 
+    """
+    Test the setup command
+    """
+
     monkeypatch.setattr(keyring,"set_password", mock_set_key)
     monkeypatch.setattr(keyring,"get_password", mock_get_key)
 
@@ -71,6 +75,10 @@ def test_setup(monkeypatch):
 
 
 def test_refresh_mock(monkeypatch):
+
+    """
+    Test the refresh command, with mock AWS Client
+    """
 
     creds_path = os.path.join(
         platform_config["aws_directory"], platform_config["creds_file_name"]
@@ -91,7 +99,11 @@ def test_refresh_mock(monkeypatch):
     assert file_age.seconds < 2
 
 
-def test_list_profiles_no(monkeypatch):
+def test_list_profiles(monkeypatch):
+
+    """
+    Test the list profiles command
+    """
     
     no = StringIO('n\n')
     monkeypatch.setattr('sys.stdin', no)
@@ -105,7 +117,29 @@ def test_list_profiles_no(monkeypatch):
     assert 'mentaws1' in profiles
 
 
-def test_list_profiles(monkeypatch):
+def test_delete_profile_no(monkeypatch):
+
+    """
+    Test the delete profile command, answering 'no' when prompted
+    """
+    
+    no = StringIO('n\n')
+    monkeypatch.setattr('sys.stdin', no)
+
+    profiles = main.list_profiles()
+    assert len(profiles) == 4
+    assert 'mentaws1' in profiles
+
+    profiles = main.remove('mentaws1')
+    assert len(profiles) == 4
+    assert 'mentaws1' in profiles
+
+
+def test_delete_profile_yes(monkeypatch):
+
+    """
+    Test the delete profile command, answering 'yes' when prompted
+    """
     
     yes = StringIO('y\n')
     monkeypatch.setattr('sys.stdin', yes)
@@ -120,23 +154,14 @@ def test_list_profiles(monkeypatch):
     assert 'mentaws1' not in profiles
 
 
-def test_refresh(monkeypatch):
-    creds_path = os.path.join(
-        platform_config["aws_directory"], platform_config["creds_file_name"]
-    )
-
-    monkeypatch.setattr(keyring,"set_password", mock_set_key)
-    monkeypatch.setattr(keyring,"get_password", mock_get_key)
-
-    main.refresh()
-
-    file_stat = os.stat(creds_path)
-    file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
-    assert file_age.seconds < 10
-
-
 def test_add_profiles(monkeypatch):
 
+    """
+    Test the adding profile
+     - checks credentials file for any long lived token (AKIA...)
+    """
+
+    # copy over deleted profile from .copy file back into original credentails file
     config = ConfigParser()
     creds_path = os.path.join(
         platform_config["aws_directory"], platform_config["creds_file_name"]
@@ -156,4 +181,27 @@ def test_add_profiles(monkeypatch):
     profiles = main.list_profiles()
     assert len(profiles) == 4
     assert 'mentaws1' in profiles
+
+
+def test_refresh(monkeypatch):
+
+    """
+    Test the refresh command, with **real** AWS Client, (real call to AWS)
+    """
+
+    creds_path = os.path.join(
+        platform_config["aws_directory"], platform_config["creds_file_name"]
+    )
+
+    monkeypatch.setattr(keyring,"set_password", mock_set_key)
+    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+
+    main.refresh()
+
+    file_stat = os.stat(creds_path)
+    file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
+    assert file_age.seconds < 10
+
+
+
 

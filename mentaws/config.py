@@ -6,13 +6,16 @@ config = {
     "default_region": "ap-southeast-1",
     "default_app_name": "sementara",
     "default_table_name": "creds",
+    "database_file": "sementara.db",
+    "creds_file_name": "credentials",
+    "encryption_key_name": "encryption_key",
+    "config_file_name": "config", # AWS config name
     "Darwin": {
         "aws_directory": "/Users/{user_name}/.aws",
-        "database_file": "sementara.db",
-        "creds_file_name": "credentials",
-        "config_file_name": "config",
-        "encryption_key_name": "encryption_key",
     },
+    "Windows": {
+        "aws_directory": "C:\\Users\\{user_name}\\.aws\\"
+    }
 }
 
 welcome_message = """
@@ -45,7 +48,7 @@ def get_platform_config() -> dict:
     )
 
     for key in config.keys():
-        if key.startswith("default"):
+        if key not in ['Linux', 'Darwin', 'Java', 'Windows']:
             platform_config[key] = config[key]
 
     return platform_config

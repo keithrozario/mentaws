@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-        os: [macos-latest, windows-latest]
+        os: [windows-latest]  # [macos-latest, windows-latest]
         poetry-version: [1.0.5]
     runs-on: ${{ matrix.os }}
     steps:
@@ -25,15 +25,26 @@ jobs:
       - name: View poetry --help
         run: poetry --help
 
-      # - name: Configure AWS CREDENTIALS FILE
-      #   env:
-      #     CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
-      #   run: |
-      #     mkdir ~/.aws
-      #     echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
-      #     echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
-      #   # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
+      - name: Configure AWS CREDENTIALS FILE
+        env:
+          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            mkdir ~/.aws
+            echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
+            echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
+            echo "SETUP on macOS complete"
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            mkdir %USERPROFILE%\.aws
+            echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials
+            echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials.copy
+            echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
+          else
+            echo "$RUNNER_OS not supported"
+            exit 1
+          fi
+        # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
       
-      # - name: Test
-      #   run: poetry run pytest .
+      - name: Test
+        run: poetry run pytest .
 
