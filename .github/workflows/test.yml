@@ -24,25 +24,26 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
       - name: View poetry --help
         run: poetry --help
+      
+      - name: Build - restore nuget packages (windows-only)
+        env:
+          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
+        if: contains(matrix.os, 'windows')
+        run: |
+          mkdir %USERPROFILE%\.aws
+          echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials
+          echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials.copy
+          echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
 
       - name: Configure AWS CREDENTIALS FILE
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
+        if: contains(matrix.os, 'macOS')
         run: |
-          if ("$RUNNER_OS" == "macOS" ); then
-            mkdir ~/.aws
-            echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
-            echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
-            echo "SETUP on macOS complete"
-          elif ("$RUNNER_OS" == "Windows" ); then
-            mkdir %USERPROFILE%\.aws
-            echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials
-            echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials.copy
-            echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
-          else
-            echo "$RUNNER_OS not supported"
-            exit 1
-          fi
+          mkdir ~/.aws
+          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
+          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
+          echo "SETUP on macOS complete"
         # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
       
       - name: Test
