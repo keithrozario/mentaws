@@ -31,10 +31,8 @@ jobs:
         if: contains(matrix.os, 'windows')
         shell: cmd
         run: |
-          echo mkdir "%USERPROFILE%\.aws\credentials"
-          mkdir "%USERPROFILE%\.aws\credentials"
-          echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
-          echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
+          echo mkdir "%USERPROFILE%\.aws"
+          mkdir "%USERPROFILE%\.aws"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
           poetry run pytest -s -x .
 
