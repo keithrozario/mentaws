@@ -28,15 +28,11 @@ jobs:
       - name: Configure AWS CREDENTIALS Dir (Windows)
         if: contains(matrix.os, 'windows')
         shell: cmd
-        run: |
-          mkdir "%USERPROFILE%\.aws"
-          "Windows Setup complete: %USERPROFILE%\.aws"
+        run: mkdir "%USERPROFILE%\.aws"
       
       - name: Configure AWS CREDENTIALS FILE (macOS)
         if: contains(matrix.os, 'macOS')
-        run: |
-          mkdir ~/.aws
-          echo "SETUP on macOS complete"
+        run: mkdir ~/.aws
       
       - name: Poetry test
         env:
