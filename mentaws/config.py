@@ -18,7 +18,7 @@ config = {
         "aws_directory": "/home/{user_name}/.aws",
     },
     "Windows": {
-        "aws_directory": "{user_profile}\\.aws"
+        "aws_directory": "{user_profile}\\.aws",
     }
 }
 
