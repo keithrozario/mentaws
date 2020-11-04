@@ -33,20 +33,9 @@ class MockClient:
 def mock_get_key(*args, **kwargs):
     return test_key
 
+
 def mock_set_key(*args, **kwargs):
     return 
-        
-
-## THIS IS ONLY NEEDED WHEN TESTING AGAINST MY LOCAL...
-# # xfail is an optional fail.
-# @pytest.mark.xfail(raises=subprocess.CalledProcessError)
-# def test_initialize():
-#     reset_script = os.path.join(
-#         platform_config["aws_directory"], 'reset.sh'
-#     )
-    
-#     # undo previous setup
-#     return_value = subprocess.run([reset_script], check=True, cwd=platform_config["aws_directory"])
 
 
 def test_version():
@@ -61,13 +50,17 @@ def test_creds_file():
 
     creds_file_path = os.path.join(platform_config["aws_directory"], platform_config["creds_file_name"])
 
-    if not os.path.exists(creds_file_path):
+    try:
+        os.mkdir(path=platform_config["aws_directory"],mode=0o755)
         with open(creds_file_path,'w') as cred_file:
             cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
         with open(f"{creds_file_path}.copy",'w') as cred_file:
             cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
         print("Loaded creds file")
-    
+    except FileExistsError:
+        pass  # directories already exists
+
+    assert os.path.isdir(platform_config["aws_directory"]) == True
     assert os.path.exists(creds_file_path) == True
 
 
