@@ -31,10 +31,9 @@ jobs:
         if: contains(matrix.os, 'windows')
         shell: cmd
         run: |
-          echo mkdir "%USERPROFILE%\.aws"
           mkdir "%USERPROFILE%\.aws"
-          echo "%AWS_CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
-          echo "%AWS_CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
+          echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
+          echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
 
       - name: Configure AWS CREDENTIALS FILE (macOS)
