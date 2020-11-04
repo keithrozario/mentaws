@@ -8,8 +8,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-        os: [windows-latest]  # [macos-latest, windows-latest]
+        python-version: [3.6]
+        os: [macos-latest, windows-latest]
         poetry-version: [1.0.5]
     runs-on: ${{ matrix.os }}
     steps:
@@ -25,7 +25,7 @@ jobs:
       - name: View poetry --help
         run: poetry --help
       
-      - name: Build - restore nuget packages (windows-only)
+      - name: Configure AWS CREDENTIALS FILE (Windows)
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'windows')
@@ -35,7 +35,7 @@ jobs:
           echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials.copy
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
 
-      - name: Configure AWS CREDENTIALS FILE
+      - name: Configure AWS CREDENTIALS FILE (macOS)
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'macOS')
