@@ -22,6 +22,9 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
       
+      - name: Poetry install
+        run: poetry install
+
       - name: Configure AWS CREDENTIALS FILE (Windows)
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
@@ -33,6 +36,7 @@ jobs:
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
+          poetry run pytest -s -x .
 
       # - name: Configure AWS CREDENTIALS FILE (macOS)
       #   env:
@@ -44,11 +48,6 @@ jobs:
       #     echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
       #     echo "SETUP on macOS complete"
       #   # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
-      
-      - name: Poetry install
-        run: poetry install
-      
-      - name: Poetry test
-        run : poetry run pytest -s -x .
+
 
 
