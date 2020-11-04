@@ -15,7 +15,7 @@ from .operations import (
 )
 
 # set encoding
-os.environ['PYTHONIOENCODING']='utf_8'
+os.environ['PYTHONIOENCODING']='utf-8'
 
 def main():
 
