@@ -43,7 +43,7 @@ jobs:
           echo "SETUP on macOS complete"
       
       - name: Poetry test
-        run: poetry run pytest -s .
+        run: poetry run pytest -s -x .
 
 
 
