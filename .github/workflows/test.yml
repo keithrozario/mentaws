@@ -27,26 +27,27 @@ jobs:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'windows')
         run: |
-          mkdir %USERPROFILE%\.aws
-          echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials
-          echo "%CREDENTIALS_FILE_CONTENTS%" > %USERPROFILE%\.aws\credentials.copy
+          echo mkdir "%USERPROFILE%\.aws"
+          ehoc "%USERPROFILE%\.aws\credentials"
+          echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
+          echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
 
-      - name: Configure AWS CREDENTIALS FILE (macOS)
-        env:
-          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
-        if: contains(matrix.os, 'macOS')
-        run: |
-          mkdir ~/.aws
-          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
-          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
-          echo "SETUP on macOS complete"
-        # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
+      # - name: Configure AWS CREDENTIALS FILE (macOS)
+      #   env:
+      #     CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
+      #   if: contains(matrix.os, 'macOS')
+      #   run: |
+      #     mkdir ~/.aws
+      #     echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
+      #     echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
+      #     echo "SETUP on macOS complete"
+      #   # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
       
-      - name: Poetry install
-        run: poetry install
+      # - name: Poetry install
+      #   run: poetry install
       
-      - name: Poetry test
-        run : poetry run pytest -s -x .
+      # - name: Poetry test
+      #   run : poetry run pytest -s -x .
 
 
