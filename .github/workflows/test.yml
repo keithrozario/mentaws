@@ -26,8 +26,6 @@ jobs:
         run: poetry install
 
       - name: Configure AWS CREDENTIALS Dir (Windows)
-        env:
-          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'windows')
         shell: cmd
         run: |
@@ -35,14 +33,14 @@ jobs:
           dir "Windows Setup complete: %USERPROFILE%\.aws"
       
       - name: Configure AWS CREDENTIALS FILE (macOS)
-        env:
-          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'macOS')
         run: |
           mkdir ~/.aws
           echo "SETUP on macOS complete"
       
       - name: Poetry test
+        env:
+          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         run: poetry run pytest -s -x .
 
 
