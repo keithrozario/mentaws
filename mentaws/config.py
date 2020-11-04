@@ -24,7 +24,7 @@ config = {
 
 welcome_message = """
 Welcome to mentaws ⌛. 
-A cli-tool that encrypts your aws credentials file, and replaces it with temporary tokens from sts. 
+A cli-tool that encrypts long lived tokens in your aws credentials file, and replaces it with temporary tokens.
 
 Usage   : mentaws <command> <args>
 
@@ -33,7 +33,7 @@ Commands: setup           first time setup
           list            list all profiles currently encrypted by sementera
           remove          remove profile from active profiles
 
-        """
+"""
 
 
 def get_platform_config() -> dict:
