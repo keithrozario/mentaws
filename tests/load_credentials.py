@@ -1,5 +1,5 @@
 import os
-from .mentaws import config
+from mentaws import config
 
 if __name__ == '__main__':
 

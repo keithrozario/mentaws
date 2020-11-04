@@ -14,16 +14,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      # - uses: actions/setup-python@v2
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
-      # - name: Run image
-      #   uses: abatilo/actions-poetry@v2.0.0
-      #   with:
-      #     poetry-version: ${{ matrix.poetry-version }}
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       
-      # - name: Poetry install
-      #   run: poetry install
+      - name: Poetry install
+        run: poetry install
 
       - name: Configure AWS CREDENTIALS Dir (Windows)
         env:
@@ -41,7 +41,7 @@ jobs:
         shell: cmd
         run: |
           dir
-          python tests\load_credentials.py
+          poetry run tests\load_credentials.py
           dir "%USERPROFILE%\.aws"
 
       - name: Configure AWS CREDENTIALS FILE (macOS)
