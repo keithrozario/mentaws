@@ -32,18 +32,10 @@ jobs:
         shell: cmd
         run: |
           mkdir "%USERPROFILE%\.aws"
-          echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
-      
-      - name: Configure AWS CREDENTIALS file (Windows)
-        env:
-          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
-        if: contains(matrix.os, 'windows')
-        shell: cmd
-        run: |
-          dir
           poetry run tests\load_credentials.py
           dir "%USERPROFILE%\.aws"
-
+          echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
+      
       - name: Configure AWS CREDENTIALS FILE (macOS)
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
