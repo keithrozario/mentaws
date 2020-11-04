@@ -13,7 +13,6 @@ jobs:
         poetry-version: [1.0.5]
     runs-on: ${{ matrix.os }}
     steps:
-
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
@@ -22,8 +21,6 @@ jobs:
         uses: abatilo/actions-poetry@v2.0.0
         with:
           poetry-version: ${{ matrix.poetry-version }}
-      - name: View poetry --help
-        run: poetry --help
       
       - name: Configure AWS CREDENTIALS FILE (Windows)
         env:
@@ -46,6 +43,10 @@ jobs:
           echo "SETUP on macOS complete"
         # The .copy file above is for testing purposes, refer to tests/mentaws::test_add_profiles
       
-      - name: Test
-        run: poetry run pytest .
+      - name: Poetry install
+        run: poetry install
+      
+      - name: Poetry test
+        run : poetry run pytest .
+
 
