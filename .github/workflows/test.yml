@@ -33,6 +33,7 @@ jobs:
         run: |
           mkdir "%USERPROFILE%\.aws"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
+          type "%USERPROFILE%\.aws\credentials"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
 
