@@ -53,6 +53,21 @@ def mock_set_key(*args, **kwargs):
 def test_version():
     assert __version__ == '0.4.4'
 
+def test_creds_file():
+    """
+    For Windows, we need to load creds with this method, because GitHub can't populate the file
+    """
+
+    creds_path = os.path.join(
+        platform_config["aws_directory"], platform_config["creds_file_name"]
+    )
+
+    if not os.path.exists(creds_path):
+        with open(creds_path,'w') as cred_file:
+            cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
+        print("Loaded creds file")
+    
+    assert os.path.exists(creds_path) == True
 
 # setup
 def test_setup(monkeypatch):

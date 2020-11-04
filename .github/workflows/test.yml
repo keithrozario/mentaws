@@ -32,9 +32,7 @@ jobs:
         shell: cmd
         run: |
           mkdir "%USERPROFILE%\.aws"
-          poetry run tests\load_credentials.py
           dir "%USERPROFILE%\.aws"
-          echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
       
       - name: Configure AWS CREDENTIALS FILE (macOS)
         env:
@@ -46,8 +44,8 @@ jobs:
           echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
           echo "SETUP on macOS complete"
       
-      # - name: Poetry test
-      #   run: poetry run pytest .
+      - name: Poetry test
+        run: poetry run pytest .
 
 
 
