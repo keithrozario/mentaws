@@ -40,6 +40,7 @@ def main():
 
 
 def setup():
+    os.environ['PYTHONIOENCODING']='utf-8'
     profiles = setup_new_db()
     if len(profiles) > 0:
         print(f"The following {len(profiles)} were added to mentaws:")
