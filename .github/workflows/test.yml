@@ -30,7 +30,7 @@ jobs:
         shell: cmd
         run: |
           mkdir "%USERPROFILE%\.aws"
-          dir "Windows Setup complete: %USERPROFILE%\.aws"
+          "Windows Setup complete: %USERPROFILE%\.aws"
       
       - name: Configure AWS CREDENTIALS FILE (macOS)
         if: contains(matrix.os, 'macOS')
