@@ -26,6 +26,7 @@ jobs:
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'windows')
+        shell: cmd
         run: |
           echo "%USERPROFILE%"
           echo "%USERPROFILE%\.aws\credentials"
