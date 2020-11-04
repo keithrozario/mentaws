@@ -28,7 +28,7 @@ jobs:
         if: contains(matrix.os, 'windows')
         run: |
           echo mkdir "%USERPROFILE%\.aws"
-          ehoc "%USERPROFILE%\.aws\credentials"
+          echo "%USERPROFILE%\.aws\credentials"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
