@@ -27,7 +27,7 @@ jobs:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'windows')
         run: |
-          echo mkdir "%USERPROFILE%\.aws"
+          echo "%USERPROFILE%"
           echo "%USERPROFILE%\.aws\credentials"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
