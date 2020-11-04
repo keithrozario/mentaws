@@ -119,6 +119,11 @@ def yes_or_no(question):
 
 
 def safe_print(print_string: str)-> None:
+    """
+    Windows Command prompt (and older terminals), don't support emojis
+    The 'smart' thing to do was to remove emojis...but I implemented this instead.
+    Emoji's are the future, and we shouldn't delay the future because some folks run cmd.exe (fight me!)
+    """
 
     try:
         print(print_string)
