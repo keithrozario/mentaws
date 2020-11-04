@@ -14,6 +14,9 @@ config = {
     "Darwin": {
         "aws_directory": "/Users/{user_name}/.aws",
     },
+    "Linux": {
+        "aws_directory": "/home/{user_name}/.aws",
+    },
     "Windows": {
         "aws_directory": "{user_profile}\\.aws"
     }
