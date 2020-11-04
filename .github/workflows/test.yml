@@ -25,18 +25,21 @@ jobs:
       # - name: Poetry install
       #   run: poetry install
 
-      - name: Configure AWS CREDENTIALS FILE (Windows)
+      - name: Configure AWS CREDENTIALS Dir (Windows)
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'windows')
         shell: cmd
         run: |
           mkdir "%USERPROFILE%\.aws"
-          dir "%USERPROFILE%"
-          echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
-          echo "hello" > "%USERPROFILE%\.aws\credentials_copy"
-          dir "%USERPROFILE%\.aws"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
+      
+      - name: Configure AWS CREDENTIALS file (Windows)
+        env:
+          CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
+        if: contains(matrix.os, 'windows')
+        shell: cmd
+        run: python3 tests/load_credentials.py
 
       - name: Configure AWS CREDENTIALS FILE (macOS)
         env:
