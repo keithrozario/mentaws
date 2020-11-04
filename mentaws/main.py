@@ -13,6 +13,8 @@ from .operations import (
     check_profile_in_db,
 )
 
+# default encoding
+sys.setdefaultencoding('utf-8')
 
 def main():
 
