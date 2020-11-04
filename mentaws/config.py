@@ -1,5 +1,6 @@
 import platform
 import getpass
+import os
 
 config = {
     "default_duration_seconds": 14400,
@@ -14,7 +15,7 @@ config = {
         "aws_directory": "/Users/{user_name}/.aws",
     },
     "Windows": {
-        "aws_directory": "C:\\Users\\{user_name}\\.aws\\"
+        "aws_directory": "{user_profile}\\.aws"
     }
 }
 
@@ -42,10 +43,15 @@ def get_platform_config() -> dict:
         platform.system()
     ]  # platform.system() is a built-in python functionality
 
-    user_name = getpass.getuser()
-    platform_config["aws_directory"] = platform_config["aws_directory"].format(
-        user_name=user_name
-    )
+    
+    if platform.system() == 'Windows':
+        platform_config["aws_directory"] = platform_config["aws_directory"].format(
+            user_profile=os.environ['USERPROFILE']
+        )
+    else:
+        platform_config["aws_directory"] = platform_config["aws_directory"].format(
+            user_name=getpass.getuser()
+        )
 
     for key in config.keys():
         if key not in ['Linux', 'Darwin', 'Java', 'Windows']:
