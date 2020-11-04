@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6]
-        os: [windows-latest]  # [macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]
         poetry-version: [1.0.5]
     runs-on: ${{ matrix.os }}
     steps:
@@ -32,7 +32,7 @@ jobs:
         shell: cmd
         run: |
           mkdir "%USERPROFILE%\.aws"
-          dir "%USERPROFILE%\.aws"
+          dir "Windows Setup complete: %USERPROFILE%\.aws"
       
       - name: Configure AWS CREDENTIALS FILE (macOS)
         env:
@@ -40,12 +40,10 @@ jobs:
         if: contains(matrix.os, 'macOS')
         run: |
           mkdir ~/.aws
-          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials
-          echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
           echo "SETUP on macOS complete"
       
       - name: Poetry test
-        run: poetry run pytest .
+        run: poetry run pytest -s .
 
 
 
