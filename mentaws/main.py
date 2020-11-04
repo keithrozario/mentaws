@@ -1,5 +1,6 @@
 import configparser
 import sys
+import os
 
 from .config import welcome_message
 from .aws_operations import get_token, get_region
@@ -13,8 +14,8 @@ from .operations import (
     check_profile_in_db,
 )
 
-# default encoding
-sys.setdefaultencoding('utf-8')
+# set encoding
+os.environ['PYTHONIOENCODING']='utf_8'
 
 def main():
 
