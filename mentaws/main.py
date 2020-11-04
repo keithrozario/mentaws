@@ -14,10 +14,12 @@ from .operations import (
     check_profile_in_db,
 )
 
-# set encoding
-os.environ['PYTHONIOENCODING']='utf-8'
 
 def main():
+
+    # set encoding
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    os.environ['PYTHONLEGACYWINDOWSSTDIO'] = 'utf-8'
 
     if sys.argv[1] == "setup":
         setup()
