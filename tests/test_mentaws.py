@@ -33,7 +33,6 @@ class MockClient:
 def mock_get_key(*args, **kwargs):
     return test_key
 
-
 def mock_set_key(*args, **kwargs):
     return 
         
@@ -53,24 +52,24 @@ def mock_set_key(*args, **kwargs):
 def test_version():
     assert __version__ == '0.4.4'
 
+
 def test_creds_file():
     """
     Loading credentials and credentials.copy file into environment if one doesn't exists.
     We use the CREDENTIALS_FILE_CONTENTS envar via GitHub Actions for our pipelin
     """
 
-    creds_path = os.path.join(
-        platform_config["aws_directory"], platform_config["creds_file_name"]
-    )
+    creds_file_path = os.path.join(platform_config["aws_directory"], platform_config["creds_file_name"])
 
-    if not os.path.exists(creds_path):
-        with open(creds_path,'w') as cred_file:
+    if not os.path.exists(creds_file_path):
+        with open(creds_file_path,'w') as cred_file:
             cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
-        with open(f"{creds_path}.copy",'w') as cred_file:
+        with open(f"{creds_file_path}.copy",'w') as cred_file:
             cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
         print("Loaded creds file")
     
-    assert os.path.exists(creds_path) == True
+    assert os.path.exists(creds_file_path) == True
+
 
 # setup
 def test_setup(monkeypatch):
