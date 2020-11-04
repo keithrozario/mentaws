@@ -50,6 +50,21 @@ def mock_set_key(*args, **kwargs):
 #     return_value = subprocess.run([reset_script], check=True, cwd=platform_config["aws_directory"])
 
 
+def test_initialize():
+    file_contents = os.environ['CREDENTIALS_FILE_CONTENTS']
+    creds_path = os.path.join(
+        platform_config["aws_directory"], platform_config["creds_file_name"]
+    )
+    
+    with open(creds_path, 'w') as cred_file:
+        cred_file.write(file_contents)
+
+    with open(f"{creds_path}.copy", 'w') as cred_file:
+        cred_file.write(file_contents)
+    
+    return
+    
+
 def test_version():
     assert __version__ == '0.4.4'
 
