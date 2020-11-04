@@ -32,7 +32,9 @@ jobs:
         shell: cmd
         run: |
           mkdir "%USERPROFILE%\.aws"
+          dir "%USERPROFILE%"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
+          echo "hello" > "%USERPROFILE%\.aws\credentials"
           dir "%USERPROFILE%\.aws"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
 
