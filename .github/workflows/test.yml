@@ -47,6 +47,6 @@ jobs:
         run: poetry install
       
       - name: Poetry test
-        run : poetry run pytest .
+        run : poetry run pytest -s -x .
 
 

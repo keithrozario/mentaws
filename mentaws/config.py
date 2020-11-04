@@ -52,6 +52,7 @@ def get_platform_config() -> dict:
         platform_config["aws_directory"] = platform_config["aws_directory"].format(
             user_name=getpass.getuser()
         )
+    print(f"AWS DIRECTORY: {platform_config['aws_directory']}")
 
     for key in config.keys():
         if key not in ['Linux', 'Darwin', 'Java', 'Windows']:
