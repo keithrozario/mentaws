@@ -55,7 +55,8 @@ def test_version():
 
 def test_creds_file():
     """
-    For Windows, we need to load creds with this method, because GitHub can't populate the file
+    Loading credentials and credentials.copy file into environment if one doesn't exists.
+    We use the CREDENTIALS_FILE_CONTENTS envar via GitHub Actions for our pipelin
     """
 
     creds_path = os.path.join(
@@ -64,6 +65,8 @@ def test_creds_file():
 
     if not os.path.exists(creds_path):
         with open(creds_path,'w') as cred_file:
+            cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
+        with open(f"{creds_path}.copy",'w') as cred_file:
             cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
         print("Loaded creds file")
     
