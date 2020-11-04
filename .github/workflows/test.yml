@@ -39,7 +39,9 @@ jobs:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         if: contains(matrix.os, 'windows')
         shell: cmd
-        run: python tests/load_credentials.py
+        run: |
+          dir
+          python tests/load_credentials.py
 
       - name: Configure AWS CREDENTIALS FILE (macOS)
         env:
