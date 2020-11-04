@@ -9,21 +9,21 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6]
-        os: [windows-latest, macos-latest]  # [macos-latest, windows-latest]
+        os: [windows-latest]  # [macos-latest, windows-latest]
         poetry-version: [1.0.5]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
+      # - uses: actions/setup-python@v2
+      #   with:
+      #     python-version: ${{ matrix.python-version }}
+      # - name: Run image
+      #   uses: abatilo/actions-poetry@v2.0.0
+      #   with:
+      #     poetry-version: ${{ matrix.poetry-version }}
       
-      - name: Poetry install
-        run: poetry install
+      # - name: Poetry install
+      #   run: poetry install
 
       - name: Configure AWS CREDENTIALS FILE (Windows)
         env:
@@ -33,6 +33,7 @@ jobs:
         run: |
           mkdir "%USERPROFILE%\.aws"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials"
+          dir "%USERPROFILE%\.aws"
           type "%USERPROFILE%\.aws\credentials"
           echo "%CREDENTIALS_FILE_CONTENTS%" > "%USERPROFILE%\.aws\credentials.copy"
           echo "SETUP on Windows complete %USERPROFILE%\.aws\credentials"
@@ -47,8 +48,8 @@ jobs:
           echo "$CREDENTIALS_FILE_CONTENTS" > ~/.aws/credentials.copy
           echo "SETUP on macOS complete"
       
-      - name: Poetry test
-        run: poetry run pytest .
+      # - name: Poetry test
+      #   run: poetry run pytest .
 
 
 
