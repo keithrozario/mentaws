@@ -40,7 +40,9 @@ jobs:
         if: contains(matrix.os, 'windows')
         shell: cmd
         run: |
+          dir
           python tests\load_credentials.py
+          dir "%USERPROFILE%\.aws"
 
       - name: Configure AWS CREDENTIALS FILE (macOS)
         env:
