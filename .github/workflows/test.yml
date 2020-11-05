@@ -25,15 +25,6 @@ jobs:
       - name: Poetry install
         run: poetry install
 
-#      - name: Configure AWS CREDENTIALS Dir (Windows)
-#        if: contains(matrix.os, 'windows')
-#        shell: cmd
-#        run: mkdir "%USERPROFILE%\.aws"
-#
-#      - name: Configure AWS CREDENTIALS FILE (macOS & Linux)
-#        if: contains(matrix.os, 'macOS') || contains(matrix.os, 'ubuntu')
-#        run: mkdir ~/.aws
-      
       - name: Poetry test
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}

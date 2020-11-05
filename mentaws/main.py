@@ -23,10 +23,17 @@ def main():
 
     if sys.argv[1] == "setup":
         setup()
+
     elif sys.argv[1] == "refresh":
-        refresh()
+        try:
+            profiles = sys.argv[2]
+            remove(profiles)
+        except IndexError:
+            remove()
+
     elif sys.argv[1] == "list":
         list_profiles()
+
     elif sys.argv[1] == "remove":
         try:
             profile_name = sys.argv[2]
@@ -34,6 +41,7 @@ def main():
         except IndexError:
             safe_print(f"Please provide the profile to remove")
             exit(1)
+
     else:
         safe_print(welcome_message)
     exit(0)
@@ -60,7 +68,11 @@ def list_profiles():
     return profiles
 
 
-def refresh():
+def refresh(profiles: str=""):
+    """
+    Args:
+      profiles: comma delimited string of profiles to refresh for
+    """
 
     new_profiles = check_new_profiles()
     if len(new_profiles) > 0:
@@ -70,7 +82,8 @@ def refresh():
         for profile in new_profiles:
             safe_print(f"{profile}")
 
-    creds = get_plaintext_credentials()
+    # Return credentials only for specified profiles
+    creds = get_plaintext_credentials(profiles)
 
     # Generate temp credentials
     temp_config = configparser.ConfigParser()
@@ -90,7 +103,7 @@ def refresh():
         )
 
     # Replace ~/.aws/credentials
-    write_creds_file(config=temp_config)
+    write_creds_file(config=temp_config, replace=False)
     safe_print(f"\n\nYou're ready to go 🚀🚀 ")
 
     return

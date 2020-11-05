@@ -29,6 +29,21 @@ class MockClient:
             }
         }
 
+# mock client for session token
+class MockClient_2:
+
+    # mock client
+    @staticmethod
+    def get_session_token(DurationSeconds=3600):
+        return {
+            'Credentials': {
+            'AccessKeyId': 'ASIA999999999',
+            'SecretAccessKey': 'kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct',
+            'SessionToken': 'kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct?<>!@#$',
+            'Expiration': datetime.now() + timedelta(seconds=DurationSeconds)
+            }
+        }
+
 
 def mock_get_key(*args, **kwargs):
     return test_key
@@ -180,6 +195,12 @@ def test_add_profiles(monkeypatch):
     with open(creds_path, 'w') as creds_file:
         config.write(creds_file)
 
+    def mock_boto3_client(*args, **kwargs):
+        if args[0] == 'sts':
+            return MockClient()
+
+    monkeypatch.setattr(boto3,"client", mock_boto3_client)
+
     monkeypatch.setattr(keyring,"set_password", mock_set_key)
     monkeypatch.setattr(keyring,"get_password", mock_get_key)
 
@@ -192,6 +213,40 @@ def test_add_profiles(monkeypatch):
     assert len(profiles) == 4
     assert 'mentaws1' in profiles
 
+
+def test_refresh_some_profiles(monkeypatch):
+    """
+    Test refreshing only some profiles
+    """
+    creds_path = os.path.join(
+        platform_config["aws_directory"], platform_config["creds_file_name"]
+    )
+
+    def mock_boto3_client(*args, **kwargs):
+        if args[0] == 'sts':
+            return MockClient_2()
+
+    monkeypatch.setattr(boto3,"client", mock_boto3_client)
+    monkeypatch.setattr(keyring,"set_password", mock_set_key)
+    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+
+    main.refresh('mentaws1,mentaws2')
+
+    file_stat = os.stat(creds_path)
+    file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
+    assert file_age.total_seconds() < 0.5
+
+    new_creds = ConfigParser()
+    new_creds.read(filenames=[creds_path])
+    
+    assert 'default' in new_creds.sections()
+    assert 'mentaws1' in new_creds.sections()
+    assert 'mentaws2' in new_creds.sections()
+    assert 'mentaws3' in new_creds.sections()
+    assert new_creds['mentaws1']['aws_access_key_id'] == 'ASIA999999999'
+    assert new_creds['mentaws2']['aws_access_key_id'] == 'ASIA999999999'
+    assert new_creds['mentaws3']['aws_access_key_id'] == 'ASIA1234567890'
+    assert new_creds['default']['aws_access_key_id'] == 'ASIA1234567890'
 
 def test_refresh(monkeypatch):
 

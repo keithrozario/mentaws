@@ -88,7 +88,8 @@ def get_plaintext_credentials(profiles: str = "") -> List[dict]:
         db.execute(f"SELECT * FROM {table_name}")
     else:
         profile_list = profiles.split(',')
-        db.execute(f"SELECT * FROM {table_name} WHERE profile in ?", str(profile_list))
+        # using the ? designator didn't work for me. Let me know if you know how to use this properly
+        db.execute(f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))}")
 
     for row in db:
         temp_row = dict()
@@ -104,10 +105,24 @@ def get_plaintext_credentials(profiles: str = "") -> List[dict]:
     return creds
 
 
-def write_creds_file(config: ConfigParser):
+def write_creds_file(config: ConfigParser, replace: bool=True):
 
-    with open(creds_file_path, "w") as creds_file:
-        config.write(creds_file)
+    """
+    Writes out data in config to credentials file
+    Args:
+      config: ConfigParser to write out too
+      replace: if True, replaces entire credentials file. If False, only over-writes existing sections
+    """
+
+    if replace:
+        with open(creds_file_path, "w") as creds_file:
+            config.write(creds_file)
+    else:
+        creds = ConfigParser()
+        creds.read(filenames=[creds_file_path], encoding="utf-8")
+        creds.read_dict(configparser_to_dict(config))
+        with open(creds_file_path, "w") as creds_file:
+            creds.write(creds_file)
 
     return
 
@@ -196,3 +211,8 @@ def check_profile_in_db(profile_name: str) -> bool:
         response = False
 
     return response
+
+def configparser_to_dict(config: ConfigParser) -> dict:
+
+    return {section: dict(config[section]) for section in config.sections()}
+
