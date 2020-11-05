@@ -17,10 +17,6 @@ from .operations import (
 
 def main():
 
-    # set encoding
-    os.environ['PYTHONIOENCODING'] = 'utf-8'
-    os.environ['PYTHONLEGACYWINDOWSSTDIO'] = 'utf-8'
-
     if sys.argv[1] == "setup":
         setup()
 
