@@ -106,7 +106,7 @@ def test_refresh_mock(monkeypatch):
 
     file_stat = os.stat(creds_path)
     file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
-    assert file_age.seconds < 2
+    assert file_age.total_seconds() < 2
 
 
 def test_list_profiles(monkeypatch):
@@ -210,7 +210,7 @@ def test_refresh(monkeypatch):
 
     file_stat = os.stat(creds_path)
     file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
-    assert file_age.seconds < 10
+    assert file_age.total_seconds() < 2
 
 
 
