@@ -50,7 +50,7 @@ def main():
 
     if args.command == "help":
         safe_print(help_message)
-        
+
     elif args.command == "setup":
         setup()
 
@@ -146,7 +146,7 @@ def remove(profiles: str) -> List[str]:
 
     for profile_name in profiles_list:
         if check_profile_in_db(profile_name):
-            if yes_or_no(f"⚠️ Are you sure you want to delete {profile_name}?"):
+            if yes_or_no(f"Are you sure you want to delete {profile_name}?"):
                 remove_profile_from_db(profile_name)
                 safe_print(f"Profile {profile_name} was deleted")
             else:
