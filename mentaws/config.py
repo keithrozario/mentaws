@@ -22,18 +22,33 @@ config = {
     }
 }
 
-welcome_message = """
-Welcome to mentaws ⌛. 
-A cli-tool that encrypts long lived tokens in your aws credentials file, and replaces it with temporary tokens.
+welcome_message = """Welcome to mentaws!"""
 
-Usage   : mentaws <command> <args>
+help_message = """
+usage: mentaws {setup,refresh,list,remove} [-p PROFILES]
 
-Commands: setup           first time setup
-          refresh         refresh new STS tokens
-          list            list all profiles currently encrypted by sementera
-          remove          remove profile from active profiles
+Welcome to mentaws! ⏳
+
+Commands:
+  setup                 First time setup of mentaws.
+  list                  List all available AWS profiles in mentaws
+  refresh               Refreshes all AWS credentials in security file.
+  remove                Permanently removes an AWS profile from mentaws.
+
+optional arguments:
+  -p, --profile         Comma-separate list of profiles to be actioned on
+
+Example commands:
+  mentaws setup
+  mentaws list
+  mentaws refresh
+  mentaws refresh -p default
+  mentaws refresh -p default,profile1,profile2
+  mentaws remove -p default
 
 """
+
+epilogue_message = """And remember to always stay fresh! 😎"""
 
 
 def get_platform_config() -> dict:

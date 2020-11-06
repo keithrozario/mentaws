@@ -50,7 +50,7 @@ def setup_new_db() -> List[str]:
         # Write out to database
         profiles = write_creds_to_db(creds)
     else:
-        profiles = []
+        profiles = None
 
     return profiles
 

@@ -1,8 +1,11 @@
 import configparser
 import sys
 import os
+import argparse
+from typing import List
 
-from .config import welcome_message
+from .__init__ import __version__
+from .config import welcome_message, help_message
 from .aws_operations import get_token, get_region
 from .operations import (
     setup_new_db,
@@ -17,29 +20,55 @@ from .operations import (
 
 def main():
 
-    if sys.argv[1] == "setup":
+    parser = argparse.ArgumentParser(description=welcome_message, add_help=False)
+    parser.add_argument(
+        'command',
+        choices=['setup', 'refresh', 'list','remove', 'help'],
+        type=str,
+        help="Name of command, must be setup, refresh, list or remove"
+
+    )
+    parser.add_argument(
+        '-p','--profiles',
+        type=str,
+        default='',
+        help="Comma-separate list of profiles to be actioned on"
+    )
+    parser.add_argument(
+        '--version', action="version",
+        version=__version__,
+        help='Display the version of this tool'
+    )
+
+    if len(sys.argv) == 1:
+        safe_print(help_message)
+        return
+
+    args = parser.parse_args()
+    command = args.command
+    profiles = args.profiles
+
+    if args.command == "help":
+        safe_print(help_message)
+        
+    elif args.command == "setup":
         setup()
 
-    elif sys.argv[1] == "refresh":
-        try:
-            profiles = sys.argv[2]
-            remove(profiles)
-        except IndexError:
-            remove()
+    elif args.command == "refresh":
+        refresh()
 
-    elif sys.argv[1] == "list":
+    elif args.command  == "list":
         list_profiles()
 
-    elif sys.argv[1] == "remove":
-        try:
-            profile_name = sys.argv[2]
-            remove(profile_name)
-        except IndexError:
-            safe_print(f"Please provide the profile to remove")
-            exit(1)
-
+    elif args.command  == "remove":
+        if not profiles == '':
+            remove(profiles)
+        else:
+            safe_print("You must provide a profile(s) using the -p argument")
     else:
-        safe_print(welcome_message)
+        safe_print("🤷‍♀️ Unknown command detected 🤷‍♀️")
+        pass
+
     exit(0)
 
     return True
@@ -48,11 +77,17 @@ def main():
 def setup():
 
     profiles = setup_new_db()
-    if len(profiles) > 0:
+
+    if profiles is None:
+        safe_print("It looks like mentaws is already setup, use mentaws refresh or mentaws list")
+    elif len(profiles) > 0:
         safe_print(f"The following {len(profiles)} profiles were added to mentaws:")
-        safe_print(f"\n👷🏿 Profile{' ' * 20}".encode('ascii', 'ignore').decode('ascii'))
+        safe_print(f"\n👷🏿 Profile{' ' * 20}")
         for k, profile in enumerate(profiles):
-            safe_print(f"{k+1:2}.{profile:<30}")
+            safe_print(f"  {k+1:2}.{profile:<30}")
+    elif len(profiles) == 0:
+        safe_print("🤔 No profiles were found in the aws credentials file")
+
     return profiles
 
 
@@ -60,7 +95,7 @@ def list_profiles():
     profiles = list_profiles_in_db()
     safe_print(f"\n👷🏿 Profile{' ' * 20}")
     for k, profile in enumerate(profiles):
-        safe_print(f"{k+1:2}.{profile:<30}")
+        safe_print(f"{k+1:2}. {profile:<30}")
     return profiles
 
 
@@ -105,16 +140,19 @@ def refresh(profiles: str=""):
     return
 
 
-def remove(profile_name: str):
+def remove(profiles: str) -> List[str]:
 
-    if check_profile_in_db(profile_name):
-        if yes_or_no(f"Are you sure you want to delete {profile_name}?"):
-            remove_profile_from_db(profile_name)
-            safe_print(f"Profile {profile_name} was deleted")
+    profiles_list = profiles.split(',')
+
+    for profile_name in profiles_list:
+        if check_profile_in_db(profile_name):
+            if yes_or_no(f"⚠️ Are you sure you want to delete {profile_name}?"):
+                remove_profile_from_db(profile_name)
+                safe_print(f"Profile {profile_name} was deleted")
+            else:
+                pass
         else:
-            pass
-    else:
-        safe_print(f"Profile {profile_name} not found")
+            safe_print(f"Profile {profile_name} not found")
 
     return list_profiles_in_db()
 
