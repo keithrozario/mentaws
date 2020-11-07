@@ -13,6 +13,8 @@ from io import StringIO
 
 platform_config = config.get_platform_config()
 test_key = "VlBrGT5dCUh0IHW6WSU8-wdJEJbjCuUhAQ1HZn352Nk="
+num_profiles = 5
+profiles = ['default', 'mentaws1', 'mentaws2', 'mentaws3']
 
 # mock client for session token
 class MockClient:
@@ -134,29 +136,11 @@ def test_list_profiles(monkeypatch):
     monkeypatch.setattr('sys.stdin', no)
 
     profiles = main.list_profiles()
-    assert len(profiles) == 4
+    assert len(profiles) == num_profiles
     assert 'mentaws1' in profiles
 
     profiles = main.remove('mentaws1')
-    assert len(profiles) == 4
-    assert 'mentaws1' in profiles
-
-
-def test_delete_profile_no(monkeypatch):
-
-    """
-    Test the delete profile command, answering 'no' when prompted
-    """
-    
-    no = StringIO('n\n')
-    monkeypatch.setattr('sys.stdin', no)
-
-    profiles = main.list_profiles()
-    assert len(profiles) == 4
-    assert 'mentaws1' in profiles
-
-    profiles = main.remove('mentaws1')
-    assert len(profiles) == 4
+    assert len(profiles) == num_profiles
     assert 'mentaws1' in profiles
 
 
@@ -165,17 +149,15 @@ def test_delete_profile_yes(monkeypatch):
     """
     Test the delete profile command, answering 'yes' when prompted
     """
-    
+    global num_profiles
     yes = StringIO('y\n')
     monkeypatch.setattr('sys.stdin', yes)
 
-    profiles = main.list_profiles()
-    assert len(profiles) == 4
-    assert 'mentaws1' in profiles
-
     main.remove('mentaws1')
     profiles = main.list_profiles()
-    assert len(profiles) == 3
+
+    num_profiles -= 1
+    assert len(profiles) == num_profiles
     assert 'mentaws1' not in profiles
 
 
@@ -185,6 +167,8 @@ def test_add_profiles(monkeypatch):
     Test the adding profile
      - checks credentials file for any long lived token (AKIA...)
     """
+
+    global num_profiles
 
     # copy over deleted profile from .copy file back into original credentails file
     config = ConfigParser()
@@ -200,17 +184,17 @@ def test_add_profiles(monkeypatch):
             return MockClient()
 
     monkeypatch.setattr(boto3,"client", mock_boto3_client)
-
     monkeypatch.setattr(keyring,"set_password", mock_set_key)
     monkeypatch.setattr(keyring,"get_password", mock_get_key)
 
     profiles = main.list_profiles()
-    assert len(profiles) == 3
+    assert len(profiles) == num_profiles
     assert 'mentaws1' not in profiles
 
     main.refresh()
     profiles = main.list_profiles()
-    assert len(profiles) == 4
+    num_profiles += 1
+    assert len(profiles) == num_profiles
     assert 'mentaws1' in profiles
 
 
@@ -238,11 +222,10 @@ def test_refresh_some_profiles(monkeypatch):
 
     new_creds = ConfigParser()
     new_creds.read(filenames=[creds_path])
+
+    for profile in profiles:
+        assert profile in new_creds.sections()
     
-    assert 'default' in new_creds.sections()
-    assert 'mentaws1' in new_creds.sections()
-    assert 'mentaws2' in new_creds.sections()
-    assert 'mentaws3' in new_creds.sections()
     assert new_creds['mentaws1']['aws_access_key_id'] == 'ASIA999999999'
     assert new_creds['mentaws2']['aws_access_key_id'] == 'ASIA999999999'
     assert new_creds['mentaws3']['aws_access_key_id'] == 'ASIA1234567890'
@@ -266,6 +249,12 @@ def test_refresh(monkeypatch):
     file_stat = os.stat(creds_path)
     file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
     assert file_age.total_seconds() < 2
+
+    for profile in profiles:
+        mentaws_session = boto3.session.Session(profile_name=profile)
+        sts_client = mentaws_session.client('sts')
+        response = sts_client.get_caller_identity()
+        assert response['Account'] == '880797093042'
 
 
 

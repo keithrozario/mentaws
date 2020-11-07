@@ -119,9 +119,10 @@ def refresh(profiles: str=""):
     # Generate temp credentials
     temp_config = configparser.ConfigParser()
 
-    safe_print("Generating temporary tokens...")
+    safe_print(f"Generating temporary tokens for {len(creds)} profiles")
     safe_print(f"\n👷🏿 Profile{' ' * 20}🌎 Region:{' '*12}⏰ Tokens expire at")
     for section in creds:
+
         region = get_region(profile=section["profile"])
         temp_token = get_token(
             key_id=section["aws_access_key_id"],

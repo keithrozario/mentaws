@@ -1,4 +1,5 @@
-from configparser import ConfigParser
+from configparser import ConfigParser, NoOptionError
+import json
 import os
 
 import sqlite3
@@ -33,7 +34,8 @@ def setup_new_db() -> List[str]:
         db.execute(
             f"CREATE TABLE {table_name} (profile text PRIMARY KEY, \
                                     aws_access_key_id text NOT NULL, \
-                                    aws_secret_access_key text NOT NULL \
+                                    aws_secret_access_key text NOT NULL, \
+                                    other_options text \
                                     )"
         )
         conn.commit()
@@ -85,21 +87,28 @@ def get_plaintext_credentials(profiles: str = "") -> List[dict]:
     db = conn.cursor()
 
     if len(profiles) == 0:
-        db.execute(f"SELECT * FROM {table_name}")
+        db.execute(f"SELECT * FROM {table_name} WHERE aws_access_key_id != ''")
     else:
         profile_list = profiles.split(',')
         # using the ? designator didn't work for me. Let me know if you know how to use this properly
-        db.execute(f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))}")
+        db.execute(f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))} AND aws_access_key_id != ''")
 
     for row in db:
+        # Sqlite3 rows are not real dictionaries, do not support easy copying
         temp_row = dict()
         for key in row.keys():
-            if key == "aws_secret_access_key":
-                temp_row[key] = decrypt(
-                    encrypted_string=row[key], app_name=app_name, key_name=key_name
-                )
-            else:
-                temp_row[key] = row[key]
+            temp_row[key] = row[key]
+
+        # decrypt secret key here
+        temp_row['aws_secret_access_key'] = decrypt(
+            encrypted_string=row['aws_secret_access_key'], app_name=app_name, key_name=key_name
+        )
+        # handle additional fiels
+        other_options = json.loads(temp_row['other_options'])
+        del temp_row['other_options']
+        for key in other_options.keys():
+            temp_row[key] = other_options[key]
+
         creds.append(temp_row)
 
     return creds
@@ -135,12 +144,16 @@ def check_new_profiles() -> dict:
 
     new_profiles = dict()
     for section in creds.sections():
-        key_id = creds.get(section, "aws_access_key_id")
-        if key_id[:4] == "AKIA" and section not in existing_profiles:
-            new_section = {}
-            for option in creds.options(section):
-                new_section[option] = creds.get(section, option)
-            new_profiles[section] = new_section
+        try:
+            key_id = creds.get(section, "aws_access_key_id")
+            if key_id[:4] == "AKIA" and section not in existing_profiles:
+                new_section = {}
+                for option in creds.options(section):
+                    new_section[option] = creds.get(section, option)
+                new_profiles[section] = new_section
+        except NoOptionError:
+            pass
+
 
     # Write new profiles to database
     if len(new_profiles.keys()) > 0:
@@ -158,18 +171,30 @@ def write_creds_to_db(creds: ConfigParser) -> List[str]:
 
     for k, section in enumerate(creds.sections()):
         profile = section
-        aws_access_key_id = creds.get(section, "aws_access_key_id")
 
-        # Encrypt secret key
-        aws_secret_access_key = encrypt(
-            plaintext=creds.get(section, "aws_secret_access_key"),
-            app_name=app_name,
-            key_name=key_name,
-        )
+        try:
+            aws_access_key_id = creds.get(section, "aws_access_key_id")
+
+            # Encrypt secret key
+            aws_secret_access_key = encrypt(
+                plaintext=creds.get(section, "aws_secret_access_key"),
+                app_name=app_name,
+                key_name=key_name,
+            )
+        except NoOptionError:  # doesn't have credentials
+            aws_access_key_id = ""
+            aws_secret_access_key = ""
+            
+
+        other_options = dict()
+        for option in creds[section]:
+            if option not in ['aws_access_key_id','aws_secret_access_key']:
+                other_options[option] = creds.get(section, option)
+
 
         db.execute(
-            f"INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key) VALUES(?,?,?)",
-            (profile, aws_access_key_id, aws_secret_access_key),
+            f"INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key, other_options) VALUES(?,?,?,?)",
+            (profile, aws_access_key_id, aws_secret_access_key, json.dumps(other_options)),
         )
 
     conn.commit()

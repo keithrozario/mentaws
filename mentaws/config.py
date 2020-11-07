@@ -5,9 +5,9 @@ import os
 config = {
     "default_duration_seconds": 14400,
     "default_region": "ap-southeast-1",
-    "default_app_name": "sementara",
+    "default_app_name": "mentaws",
     "default_table_name": "creds",
-    "database_file": "sementara.db",
+    "database_file": "mentaws.db",
     "creds_file_name": "credentials",
     "encryption_key_name": "encryption_key",
     "config_file_name": "config", # AWS config name
