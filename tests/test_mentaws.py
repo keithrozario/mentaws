@@ -1,5 +1,5 @@
 from mentaws import __version__
-from mentaws import main, config
+from mentaws import main, config, aws_operations
 from configparser import ConfigParser
 
 import os
@@ -231,6 +231,13 @@ def test_refresh_some_profiles(monkeypatch):
     assert new_creds['mentaws3']['aws_access_key_id'] == 'ASIA1234567890'
     assert new_creds['default']['aws_access_key_id'] == 'ASIA1234567890'
 
+def test_region_setting():
+
+    assert aws_operations.get_region('default') == 'ap-southeast-1'
+    assert aws_operations.get_region('mentaws1') == 'ap-southeast-1'
+    assert aws_operations.get_region('mentaws2') == 'ap-southeast-2'
+    assert aws_operations.get_region('mentaws3') == 'ap-southeast-1'
+
 def test_refresh(monkeypatch):
 
     """
@@ -255,7 +262,4 @@ def test_refresh(monkeypatch):
         sts_client = mentaws_session.client('sts')
         response = sts_client.get_caller_identity()
         assert response['Account'] == '880797093042'
-
-
-
 
