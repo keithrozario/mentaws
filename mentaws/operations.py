@@ -1,6 +1,7 @@
 from configparser import ConfigParser, NoOptionError
 import json
 import os
+import sys
 
 import sqlite3
 
@@ -57,14 +58,17 @@ def setup_new_db() -> List[str]:
     return profiles
 
 
-def list_profiles_in_db(print_profiles: bool = True) -> List[str]:
+def list_profiles_in_db() -> List[str]:
     """
     List all profiles in database
     """
-    conn = sqlite3.connect(sementara_db_path)
-    conn.row_factory = sqlite3.Row
-    db = conn.cursor()
-    db.execute(f"SELECT profile FROM {table_name}")
+    try:
+        conn = sqlite3.connect(sementara_db_path)
+        conn.row_factory = sqlite3.Row
+        db = conn.cursor()
+        db.execute(f"SELECT profile FROM {table_name}")
+    except sqlite3.OperationalError:
+        sys.exit("No database table, DB might has not been setup or is corrupted.")
 
     profiles = [row["profile"] for row in db]
 
@@ -140,7 +144,7 @@ def check_new_profiles() -> dict:
 
     creds = ConfigParser()
     creds.read(filenames=[creds_file_path], encoding="utf-8")
-    existing_profiles = list_profiles_in_db(print_profiles=False)
+    existing_profiles = list_profiles_in_db()
 
     new_profiles = dict()
     for section in creds.sections():
@@ -217,6 +221,8 @@ def remove_profile_from_db(profile_name: str) -> bool:
     except (IndexError, KeyError):
         print(f"{profile_name} profile not found")
         response = False
+    except sqlite3.OperationalError:
+        sys.exit("No database table, DB might has not been setup or is corrupted.")
 
     conn.close()
     return response
@@ -224,10 +230,14 @@ def remove_profile_from_db(profile_name: str) -> bool:
 
 def check_profile_in_db(profile_name: str) -> bool:
 
-    conn = sqlite3.connect(sementara_db_path)
-    conn.row_factory = sqlite3.Row
-    db = conn.cursor()
-    db.execute(f"SELECT profile FROM {table_name} WHERE profile=?", (profile_name,))
+    try:
+        conn = sqlite3.connect(sementara_db_path)
+        conn.row_factory = sqlite3.Row
+        db = conn.cursor()
+        db.execute(f"SELECT profile FROM {table_name} WHERE profile=?", (profile_name,))
+    except sqlite3.OperationalError:
+        sys.exit("No database table, DB might has not been setup or is corrupted.")
+    
 
     try:
         row = [item for item in db]
@@ -241,3 +251,10 @@ def configparser_to_dict(config: ConfigParser) -> dict:
 
     return {section: dict(config[section]) for section in config.sections()}
 
+
+def creds_file_contents():
+    
+    creds = ConfigParser()
+    creds.read(filenames=[creds_file_path], encoding="utf-8")
+
+    return creds

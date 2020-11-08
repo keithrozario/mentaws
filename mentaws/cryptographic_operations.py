@@ -1,7 +1,9 @@
 import secrets
 import base64
+import sys
+
 import keyring
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 
 def gen_key() -> str:
@@ -44,7 +46,10 @@ def decrypt(encrypted_string: str, app_name: str, key_name: str) -> str:
     """
 
     key = get_key(app_name, key_name)
-    decrypted_string = key.decrypt(encrypted_string.encode("utf-8"))
+    try:
+        decrypted_string = key.decrypt(encrypted_string.encode("utf-8"))
+    except InvalidToken:
+        sys.exit("Password Error!! Please check password and try again")
     return decrypted_string.decode("utf-8")
 
 

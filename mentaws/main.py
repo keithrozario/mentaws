@@ -15,6 +15,7 @@ from .operations import (
     remove_profile_from_db,
     check_new_profiles,
     check_profile_in_db,
+    creds_file_contents,
 )
 
 
@@ -23,7 +24,7 @@ def main():
     parser = argparse.ArgumentParser(description=welcome_message, add_help=False)
     parser.add_argument(
         'command',
-        choices=['setup', 'refresh', 'list','remove', 'help'],
+        choices=['setup', 'refresh', 'status','list','remove', 'help'],
         type=str,
         help="Name of command, must be setup, refresh, list or remove"
 
@@ -59,6 +60,9 @@ def main():
 
     elif args.command  == "list":
         list_profiles()
+    
+    elif args.command  == "status":
+        status()
 
     elif args.command  == "remove":
         if not profiles == '':
@@ -131,7 +135,7 @@ def refresh(profiles: str=""):
         )
         temp_config[section["profile"]] = temp_token
         safe_print(
-            f"   {section['profile']:<30}{region:<22}{temp_token['aws_token_expiry_time']}"
+            f"   {section['profile']:<30}{region:<22}{temp_token['aws_token_expiry_time_human']}"
         )
 
     # Replace ~/.aws/credentials
@@ -157,6 +161,24 @@ def remove(profiles: str) -> List[str]:
 
     return list_profiles_in_db()
 
+def status() -> List[dict]:
+    
+    creds = creds_file_contents()
+    safe_print(f"\n👷🏿 Profile{' ' * 20}🔑 Key:{' '*18}⏰ Tokens expire at")
+    for section in creds:
+        if not section == "DEFAULT":
+            region = get_region(profile=section)
+            try:
+                safe_print(
+                    f"   {section:<30}{creds[section]['aws_access_key_id']:<25}{creds[section]['aws_token_expiry_time_human']}"
+                )
+            except KeyError:
+                # Sections without expiry time
+                safe_print(
+                    f"   {section:<30}-{' '*24}No Token Expiry"
+                )
+
+    return
 
 def yes_or_no(question):
     reply = str(input(question + " (y/n): ")).lower().strip()
