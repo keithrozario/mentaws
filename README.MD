@@ -90,7 +90,6 @@ For the encryption we use the [pyca/cryptography](https://cryptography.io/en/lat
 We store the randomly generated key in your macOS keychain using keyring, this has one limitation, namely:
 
 * Any Python script or application can access secrets created by keyring from that same Python executable without the operating system prompting the user for a password. **To cause any specific secret to prompt for a password every time it is accessed, locate the credential using the Keychain Access application, and in the Access Control settings, remove Python from the list of allowed applications.**
-
 ## Warning
 
 This project is still in beta, and work with all AWS features, use at your own risk.
