@@ -27,7 +27,6 @@ def main():
         choices=['setup', 'refresh', 'status','list','remove', 'help'],
         type=str,
         help="Name of command, must be setup, refresh, list or remove"
-
     )
     parser.add_argument(
         '-p','--profiles',
@@ -43,7 +42,7 @@ def main():
 
     if len(sys.argv) == 1:
         safe_print(help_message)
-        return
+        return 0
 
     args = parser.parse_args()
     command = args.command
@@ -51,31 +50,33 @@ def main():
 
     if args.command == "help":
         safe_print(help_message)
+        command = 0
 
     elif args.command == "setup":
         setup()
+        command = 1
 
     elif args.command == "refresh":
         refresh()
+        command = 2
 
     elif args.command  == "list":
         list_profiles()
+        command = 3
     
     elif args.command  == "status":
         status()
+        command = 4
 
     elif args.command  == "remove":
         if not profiles == '':
             remove(profiles)
+            comamand = 5
         else:
             safe_print("You must provide a profile(s) using the -p argument")
-    else:
-        safe_print("🤷‍♀️ Unknown command detected 🤷‍♀️")
-        pass
+            command = -1
 
-    exit(0)
-
-    return True
+    return command
 
 
 def setup():
