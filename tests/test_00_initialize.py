@@ -8,7 +8,10 @@ from .settings import platform_config, test_key, num_profiles, profiles
 def test_delete_old_files():
     
     db_file_path = os.path.join(platform_config["aws_directory"], platform_config["database_file"])
-    os.remove(db_file_path)
+    try:
+        os.remove(db_file_path)
+    except FileNotFoundError:
+        pass
 
     assert os.path.exists(db_file_path) == False
 
