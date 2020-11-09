@@ -62,14 +62,14 @@ def get_platform_config() -> dict:
     ]  # platform.system() is a built-in python functionality
 
     
-    # if platform.system() == 'Windows':
-    #     platform_config["aws_directory"] = platform_config["aws_directory"].format(
-    #         user_profile=os.environ['USERPROFILE']
-    #     )
-    # else:
-    platform_config["aws_directory"] = platform_config["aws_directory"].format(
-        user_name=getpass.getuser()
-    )
+    if platform.system() == 'Windows':
+        platform_config["aws_directory"] = platform_config["aws_directory"].format(
+            user_profile=os.environ['USERPROFILE']
+        )
+    else:
+        platform_config["aws_directory"] = platform_config["aws_directory"].format(
+            user_name=getpass.getuser()
+        )
 
     for key in config.keys():
         if key not in ['Linux', 'Darwin', 'Java', 'Windows']:
