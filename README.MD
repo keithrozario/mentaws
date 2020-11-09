@@ -1,12 +1,12 @@
 # mentaws (moMENTary AWS tokens)
 
+Stay Fresh!
+
 ## Introduction
 
-mentaws (pronounced like the candy) is a portmanteau of Moment & AWS.
+mentaws (rhymes with jaws, and sounds like the candy) replaces your aws credentials file with fresh temporary tokens, while keeping your long lived AWS secret keys encrypted.
 
-It's a python package that replaces your aws credentials file with temporary tokens, while keeping your long lived AWS credentials encrypted.
-
-This way, the plaintext credentials file has only temporary tokens. Leaving sensitive long lived tokens encrypted.
+This way, the plaintext credentials file has only temporary tokens. Leaving sensitive long lived keys encrypted in your keychain.
 
 ## Usage
 
@@ -40,13 +40,24 @@ This way, the plaintext credentials file has only temporary tokens. Leaving sens
     Are you sure you want to delete default? (y/n): y
     Profile default was deleted
 
+### Status
+
+    $ mentaws status
+    👷🏿 Profile                    🔑 Key:                  ⏰ Tokens expire at
+       default                       ASIA42EXAMPLE1234567    Mon 14:28 tz:+08
+       mentaws1                      ASIA42EXAMPLE1234567    Mon 14:28 tz:+08
+       mentaws2                      ASIA42EXAMPLE1234567    Mon 16:28 tz:+08
+       mentaws3                      ASIA42EXAMPLE1234567    Tue 20:28 tz:+08
+       metawsFail                    ERROR                   ***FAILED***
+       testassumptionprofile         -                       No Token Expiry
+
 ## Installation
 
 The simplest way to install mentaws is to use `pipx`
 
     $ pipx install mentaws
 
-of pip
+of `pip`
 
     $ pip install mentaws
 
@@ -60,13 +71,15 @@ For now, the easiest way to add a profile is to use the generic aws-cli commands
     Default region name [None]: us-east-1
     Default output format [None]: text
 
-On the next refresh, mentaws will load these new profiles into its database
+On the next `refresh`, mentaws will load these new profiles into its database. 
+
+*Note: This method works even if you modified the credentials file manually.*
 
 ## Implementation details
 
 The AWS credentials are stored in a sqlite3 database in the same directory as your AWS directory.
 
-When you first setup mentaws, a randomly generated key is generated and stored in your macOS keychain. This key is then used to encrypt the `aws_secret_access_key`. All other fields like the profile names and `aws_access_key_id` are stored in plaintext.
+When you first setup mentaws, an encryption key is randomly generated and stored in your macOS keychain. This key is then used to encrypt the `aws_secret_access_key`. All other fields,including the `aws_access_key_id` are stored in plaintext -- the encrypted key together with other metadata is stored in a SQLITE database in your default aws directory.
 
 For the encryption we use the [pyca/cryptography](https://cryptography.io/en/latest/fernet.html#implementation) package, which implements the following:
 

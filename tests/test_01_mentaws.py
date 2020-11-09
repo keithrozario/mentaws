@@ -11,10 +11,7 @@ import boto3
 import keyring
 from io import StringIO
 
-platform_config = config.get_platform_config()
-test_key = "VlBrGT5dCUh0IHW6WSU8-wdJEJbjCuUhAQ1HZn352Nk="
-num_profiles = 6
-profiles = ['default', 'mentaws1', 'mentaws2', 'mentaws3', 'mentawsFail']
+from .settings import platform_config, test_key, num_profiles, profiles
 
 # mock client for session token
 class MockClient:
@@ -59,39 +56,6 @@ def test_version():
     assert __version__ == '0.4.4'
 
 
-def test_creds_file():
-    """
-    Loading credentials and credentials.copy file into environment if one doesn't exists.
-    We use the CREDENTIALS_FILE_CONTENTS envar via GitHub Actions for our pipelin
-    """
-
-    creds_file_path = os.path.join(platform_config["aws_directory"], platform_config["creds_file_name"])
-
-    try:
-        os.mkdir(path=platform_config["aws_directory"],mode=0o755)
-        with open(creds_file_path,'w') as cred_file:
-            cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
-        with open(f"{creds_file_path}.copy",'w') as cred_file:
-            cred_file.write(os.environ.get('CREDENTIALS_FILE_CONTENTS', ""))
-        print("Loaded creds file")
-    except FileExistsError:
-        pass  # directories already exists
-
-    assert os.path.isdir(platform_config["aws_directory"]) == True
-    assert os.path.exists(creds_file_path) == True
-
-
-def test_not_yet_setup():
-
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-            main.refresh()
-    assert pytest_wrapped_e.type == SystemExit
-
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-            main.list_profiles()
-    assert pytest_wrapped_e.type == SystemExit
-
-# setup
 def test_setup(monkeypatch):
 
     """
@@ -133,6 +97,7 @@ def test_refresh_mock(monkeypatch):
     file_stat = os.stat(creds_path)
     file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
     assert file_age.total_seconds() < 2
+
 
 def test_status():
 
@@ -176,7 +141,6 @@ def test_delete_profile_yes(monkeypatch):
     num_profiles -= 1
     assert len(profiles) == num_profiles
     assert 'mentaws1' not in profiles
-
 
 
 def test_add_profiles(monkeypatch):
@@ -250,12 +214,14 @@ def test_refresh_some_profiles(monkeypatch):
     assert new_creds['mentaws3']['aws_access_key_id'] == 'ASIA1234567890'
     assert new_creds['default']['aws_access_key_id'] == 'ASIA1234567890'
 
+
 def test_region_setting():
 
     assert aws_operations.get_region('default') == 'ap-southeast-1'
     assert aws_operations.get_region('mentaws1') == 'ap-southeast-1'
     assert aws_operations.get_region('mentaws2') == 'ap-southeast-2'
     assert aws_operations.get_region('mentaws3') == 'ap-southeast-1'
+
 
 def test_refresh(monkeypatch):
 
@@ -282,4 +248,3 @@ def test_refresh(monkeypatch):
             sts_client = mentaws_session.client('sts')
             response = sts_client.get_caller_identity()
             assert response['Account'] == '880797093042'
-
