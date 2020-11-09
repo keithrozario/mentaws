@@ -2,6 +2,8 @@ import secrets
 import base64
 import sys
 
+from typing import List
+
 import keyring
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -35,33 +37,53 @@ def get_key(app_name: str, key_name: str) -> Fernet:
     return encryption_key
 
 
-def decrypt(encrypted_string: str, app_name: str, key_name: str) -> str:
+def decrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
     """
     Args:
-        encrypted_string: encrypted string
-        app_name: Name of application in Keychain
-        key_name: Name of key in KeyChain
+        profiles: dictionary of format {'profile': <value>, 'aws_secret_access_key': <value>}
+        app_name: app name of key in keychain
+        key_name: key name in keychain
     return:
-        decrypted_string: string decrypted with single key
+        decrypted_keys: dictionary of format {'profile': 'encrypted_aws_secret_access_key'}
+        You'll be able to get the decrypted key, by accessing decrypted_keys.get(<profile_name>)
     """
 
     key = get_key(app_name, key_name)
+    decrypted_keys = dict()
+
     try:
-        decrypted_string = key.decrypt(encrypted_string.encode("utf-8"))
+        for profile in profiles:
+            if not profile['aws_secret_access_key'] == "":
+                aws_secret_access_key = key.decrypt(profile['aws_secret_access_key'].encode("utf-8"))
+                decrypted_keys[profile['profile']] = aws_secret_access_key.decode('utf-8')
+            else: 
+                decrypted_keys[profile['profile']] = ""
     except InvalidToken:
         sys.exit("Password Error!! Please check password and try again")
-    return decrypted_string.decode("utf-8")
+
+    return decrypted_keys
 
 
-def encrypt(plaintext: str, app_name: str, key_name: str) -> str:
+
+def encrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
     """
     Args:
-        plaintext: plaintext to be encrypted
+        profiles: dictionary of format {'profile': <value>, 'aws_secret_access_key': <value>}
+        app_name: app name of key in keychain
+        key_name: key name in keychain
     return:
-        encrypted_string: encrypted_string
+        encrypted_keys: dictionary of format {'profile': 'encrypted_aws_secret_access_key'}
+        You'll be able to get the encrypted key, by accessing encrypted_keys.get(<profile_name>)
     """
 
     key = get_key(app_name, key_name)
-    encrypted_string = key.encrypt(plaintext.encode("utf-8"))
+    encrypted_keys = dict()
+    
+    for profile in profiles:
+        if not profile['aws_secret_access_key'] == "":
+            encrypted_aws_secret_access_key = key.encrypt(profile['aws_secret_access_key'].encode("utf-8"))
+            encrypted_keys[profile['profile']] = encrypted_aws_secret_access_key.decode('utf-8')
+        else: 
+            encrypted_keys[profile['profile']] = ""
 
-    return encrypted_string.decode("utf-8")
+    return encrypted_keys

@@ -6,7 +6,7 @@ import sys
 import sqlite3
 
 from .config import get_platform_config
-from .cryptographic_operations import setup_key, encrypt, decrypt
+from .cryptographic_operations import setup_key, encrypt_keys, decrypt_keys
 
 from typing import List
 
@@ -104,17 +104,18 @@ def get_plaintext_credentials(profiles: str = "") -> List[dict]:
         for key in row.keys():
             temp_row[key] = row[key]
 
-        # decrypt secret key here
-        temp_row['aws_secret_access_key'] = decrypt(
-            encrypted_string=row['aws_secret_access_key'], app_name=app_name, key_name=key_name
-        )
-        # handle additional fiels
+        # handle additional fields
         other_options = json.loads(temp_row['other_options'])
         del temp_row['other_options']
         for key in other_options.keys():
             temp_row[key] = other_options[key]
-
         creds.append(temp_row)
+
+    # append with plaintext keys, we do it this way, so that one call can be made to cryptographic operations, and retrieve the secret key once!
+    # This reduces the number of times the user has to enter the keychain password  
+    plaintext_keys = decrypt_keys(profiles=creds, app_name=app_name, key_name=key_name)
+    for cred in creds:
+        cred['aws_secret_access_key'] = plaintext_keys[cred['profile']]
 
     return creds
 
@@ -172,32 +173,41 @@ def write_creds_to_db(creds: ConfigParser) -> List[str]:
     conn = sqlite3.connect(sementara_db_path)
     db = conn.cursor()
 
+    rows_to_write = list()
+
     for k, section in enumerate(creds.sections()):
-        profile = section
+        temp_profile = dict()
+        temp_profile['profile'] = section
 
         try:
-            aws_access_key_id = creds.get(section, "aws_access_key_id")
+            temp_profile['aws_access_key_id'] = creds.get(section, "aws_access_key_id")
+            temp_profile['aws_secret_access_key'] = creds.get(section, "aws_secret_access_key")
 
-            # Encrypt secret key
-            aws_secret_access_key = encrypt(
-                plaintext=creds.get(section, "aws_secret_access_key"),
-                app_name=app_name,
-                key_name=key_name,
-            )
         except NoOptionError:  # doesn't have credentials
-            aws_access_key_id = ""
-            aws_secret_access_key = ""
+            temp_profile['aws_access_key_id'] = ""
+            temp_profile['aws_secret_access_key'] = ""
             
 
         other_options = dict()
         for option in creds[section]:
             if option not in ['aws_access_key_id','aws_secret_access_key']:
                 other_options[option] = creds.get(section, option)
+        
+        rows_to_write.append(temp_profile)
+    
+    # append with encrypted keys, we do it this way, so that one call can be made to cryptographic operations, and retrieve the secret key once!
+    # This reduces the number of times the user has to enter the keychain password
+    encrypted_keys = encrypt_keys(
+        profiles=rows_to_write,
+        app_name=app_name, 
+        key_name=key_name
+    )
 
-
+    for row in rows_to_write:
+        profile = row['profile']
         db.execute(
             f"INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key, other_options) VALUES(?,?,?,?)",
-            (profile, aws_access_key_id, aws_secret_access_key, json.dumps(other_options)),
+            (profile, row['aws_access_key_id'], encrypted_keys[profile], json.dumps(other_options)),
         )
 
     conn.commit()
@@ -240,6 +250,7 @@ def check_profile_in_db(profile_name: str) -> bool:
         response = False
 
     return response
+
 
 def configparser_to_dict(config: ConfigParser) -> dict:
 
