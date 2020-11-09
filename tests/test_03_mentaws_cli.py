@@ -75,11 +75,11 @@ def test_other_commands(monkeypatch):
     command = main.main()
     assert command == -1
 
-    # INvalid
-    monkeypatch.setattr("sys.argv", ["mentaws", "invalidCommand"])
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-            command = main.main()
-    assert pytest_wrapped_e.type == SystemExit
+    # # Invalid
+    # monkeypatch.setattr("sys.argv", ["mentaws", "invalidCommand"])
+    # with pytest.raises(SystemExit) as pytest_wrapped_e:
+    #         command = main.main()
+    # assert pytest_wrapped_e.type == SystemExit
 
 def test_refresh(monkeypatch):
     creds_path = os.path.join(
