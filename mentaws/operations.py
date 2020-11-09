@@ -62,17 +62,18 @@ def list_profiles_in_db() -> List[str]:
     """
     List all profiles in database
     """
-    try:
+    if os.path.isfile(sementara_db_path):
         conn = sqlite3.connect(sementara_db_path)
         conn.row_factory = sqlite3.Row
         db = conn.cursor()
         db.execute(f"SELECT profile FROM {table_name}")
-    except sqlite3.OperationalError:
+
+        profiles = [row["profile"] for row in db]
+
+        conn.close()
+    
+    else:
         sys.exit("No database table, DB might has not been setup or is corrupted.")
-
-    profiles = [row["profile"] for row in db]
-
-    conn.close()
 
     return profiles
 
@@ -124,18 +125,16 @@ def write_creds_file(config: ConfigParser, replace: bool=True):
     Writes out data in config to credentials file
     Args:
       config: ConfigParser to write out too
+
+      **Future addition**
       replace: if True, replaces entire credentials file. If False, only over-writes existing sections
     """
 
-    if replace:
-        with open(creds_file_path, "w") as creds_file:
-            config.write(creds_file)
-    else:
-        creds = ConfigParser()
-        creds.read(filenames=[creds_file_path], encoding="utf-8")
-        creds.read_dict(configparser_to_dict(config))
-        with open(creds_file_path, "w") as creds_file:
-            creds.write(creds_file)
+    creds = ConfigParser()
+    creds.read(filenames=[creds_file_path], encoding="utf-8")
+    creds.read_dict(configparser_to_dict(config))
+    with open(creds_file_path, "w") as creds_file:
+        creds.write(creds_file)
 
     return
 
@@ -219,7 +218,6 @@ def remove_profile_from_db(profile_name: str) -> bool:
         conn.commit()
         response = True
     except (IndexError, KeyError):
-        print(f"{profile_name} profile not found")
         response = False
     except sqlite3.OperationalError:
         sys.exit("No database table, DB might has not been setup or is corrupted.")
@@ -230,19 +228,15 @@ def remove_profile_from_db(profile_name: str) -> bool:
 
 def check_profile_in_db(profile_name: str) -> bool:
 
-    try:
-        conn = sqlite3.connect(sementara_db_path)
-        conn.row_factory = sqlite3.Row
-        db = conn.cursor()
-        db.execute(f"SELECT profile FROM {table_name} WHERE profile=?", (profile_name,))
-    except sqlite3.OperationalError:
-        sys.exit("No database table, DB might has not been setup or is corrupted.")
-    
+    conn = sqlite3.connect(sementara_db_path)
+    conn.row_factory = sqlite3.Row
+    db = conn.cursor()
+    db.execute(f"SELECT profile FROM {table_name} WHERE profile=?", (profile_name,))
 
-    try:
-        row = [item for item in db]
+    row = [item for item in db]
+    if len(row) > 0 :
         response = True
-    except (IndexError, KeyError):
+    else:
         response = False
 
     return response
@@ -252,7 +246,7 @@ def configparser_to_dict(config: ConfigParser) -> dict:
     return {section: dict(config[section]) for section in config.sections()}
 
 
-def creds_file_contents():
+def creds_file_contents() -> ConfigParser:
     
     creds = ConfigParser()
     creds.read(filenames=[creds_file_path], encoding="utf-8")

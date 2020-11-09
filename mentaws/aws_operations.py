@@ -47,8 +47,8 @@ def get_token(
         token = {
             "aws_access_key_id": "ERROR",
             "aws_secret_access_key": "ERROR",
-            "aws_session_token": "ERROR",
-            "aws_token_expiry_time": "  ***FAILED***  ",
+            "aws_token_expiry_time_human": "  ***FAILED***  ",
+            "aws_token_expiry_time_machine": "  ***FAILED***  ",
         }
 
     return token
@@ -79,11 +79,8 @@ def get_region(profile: str) -> str:
     try:
         region = aws_config[f"profile {profile}"]["region"]
     except KeyError:
-        try:
-            region = aws_config['default']['region']
-        except KeyError:
-            region = platform_config["default_region"]
-
+        region = aws_config['default']['region']
+    
     return region
 
 

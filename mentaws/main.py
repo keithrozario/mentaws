@@ -145,7 +145,7 @@ def refresh(profiles: str=""):
     return
 
 
-def remove(profiles: str) -> List[str]:
+def remove(profiles: str) -> bool:
 
     profiles_list = profiles.split(',')
 
@@ -154,31 +154,42 @@ def remove(profiles: str) -> List[str]:
             if yes_or_no(f"Are you sure you want to delete {profile_name}?"):
                 remove_profile_from_db(profile_name)
                 safe_print(f"Profile {profile_name} was deleted")
+                deleted = True
             else:
-                pass
+                deleted = False
         else:
             safe_print(f"Profile {profile_name} not found")
+            deleted = False
 
-    return list_profiles_in_db()
+    return deleted
 
 def status() -> List[dict]:
+    """
+    List out all Profiles, eys and expiry times
+    """
     
     creds = creds_file_contents()
+    profiles = list()
+
     safe_print(f"\n👷🏿 Profile{' ' * 20}🔑 Key:{' '*18}⏰ Tokens expire at")
-    for section in creds:
+    
+    for section in creds.sections():
         if not section == "DEFAULT":
-            region = get_region(profile=section)
             try:
                 safe_print(
                     f"   {section:<30}{creds[section]['aws_access_key_id']:<25}{creds[section]['aws_token_expiry_time_human']}"
                 )
+                temp = {"profile": section, "aws_access_key_id": creds[section]['aws_access_key_id'], "token_expiry": creds[section]['aws_token_expiry_time_human']}
             except KeyError:
                 # Sections without expiry time
                 safe_print(
                     f"   {section:<30}-{' '*24}No Token Expiry"
                 )
+                temp = {'profile': section}
+            profiles.append(temp)
+        
 
-    return
+    return profiles
 
 def yes_or_no(question):
     reply = str(input(question + " (y/n): ")).lower().strip()

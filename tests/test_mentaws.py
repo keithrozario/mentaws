@@ -13,8 +13,8 @@ from io import StringIO
 
 platform_config = config.get_platform_config()
 test_key = "VlBrGT5dCUh0IHW6WSU8-wdJEJbjCuUhAQ1HZn352Nk="
-num_profiles = 5
-profiles = ['default', 'mentaws1', 'mentaws2', 'mentaws3']
+num_profiles = 6
+profiles = ['default', 'mentaws1', 'mentaws2', 'mentaws3', 'mentawsFail']
 
 # mock client for session token
 class MockClient:
@@ -81,6 +81,16 @@ def test_creds_file():
     assert os.path.exists(creds_file_path) == True
 
 
+def test_not_yet_setup():
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+            main.refresh()
+    assert pytest_wrapped_e.type == SystemExit
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+            main.list_profiles()
+    assert pytest_wrapped_e.type == SystemExit
+
 # setup
 def test_setup(monkeypatch):
 
@@ -116,7 +126,6 @@ def test_refresh_mock(monkeypatch):
             return MockClient()
     
     monkeypatch.setattr(boto3,"client", mock_boto3_client)
-    monkeypatch.setattr(keyring,"set_password", mock_set_key)
     monkeypatch.setattr(keyring,"get_password", mock_get_key)
 
     main.refresh()
@@ -124,6 +133,13 @@ def test_refresh_mock(monkeypatch):
     file_stat = os.stat(creds_path)
     file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
     assert file_age.total_seconds() < 2
+
+def test_status():
+
+    statuses = main.status()
+    for status in statuses:
+        if status['profile'] not in ['testassumptionprofile']:
+            assert status['aws_access_key_id'] == "ASIA1234567890"
 
 
 def test_list_profiles(monkeypatch):
@@ -139,7 +155,8 @@ def test_list_profiles(monkeypatch):
     assert len(profiles) == num_profiles
     assert 'mentaws1' in profiles
 
-    profiles = main.remove('mentaws1')
+    main.remove('mentaws1')
+    profiles = main.list_profiles()
     assert len(profiles) == num_profiles
     assert 'mentaws1' in profiles
 
@@ -159,6 +176,7 @@ def test_delete_profile_yes(monkeypatch):
     num_profiles -= 1
     assert len(profiles) == num_profiles
     assert 'mentaws1' not in profiles
+
 
 
 def test_add_profiles(monkeypatch):
@@ -202,6 +220,7 @@ def test_refresh_some_profiles(monkeypatch):
     """
     Test refreshing only some profiles
     """
+    global profiles
     creds_path = os.path.join(
         platform_config["aws_directory"], platform_config["creds_file_name"]
     )
@@ -223,8 +242,8 @@ def test_refresh_some_profiles(monkeypatch):
     new_creds = ConfigParser()
     new_creds.read(filenames=[creds_path])
 
-    for profile in profiles:
-        assert profile in new_creds.sections()
+    # for profile in profiles:
+    #     assert profile in new_creds.sections()
     
     assert new_creds['mentaws1']['aws_access_key_id'] == 'ASIA999999999'
     assert new_creds['mentaws2']['aws_access_key_id'] == 'ASIA999999999'
@@ -258,8 +277,9 @@ def test_refresh(monkeypatch):
     assert file_age.total_seconds() < 2
 
     for profile in profiles:
-        mentaws_session = boto3.session.Session(profile_name=profile)
-        sts_client = mentaws_session.client('sts')
-        response = sts_client.get_caller_identity()
-        assert response['Account'] == '880797093042'
+        if not profile == 'mentawsFail':
+            mentaws_session = boto3.session.Session(profile_name=profile)
+            sts_client = mentaws_session.client('sts')
+            response = sts_client.get_caller_identity()
+            assert response['Account'] == '880797093042'
 
