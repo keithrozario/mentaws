@@ -220,8 +220,8 @@ def unsetup() -> bool:
     write_creds_file(config=temp_config, replace=True)
     mentaws_db_path = remove_creds_file()
 
-    print(f"{mentaws_db_path} has been been deleted, it's like we were never here")
-    print(unsetup_message)
+    safe_print(f"{mentaws_db_path} has been been deleted, it's like we were never here")
+    safe_print(unsetup_message)
     
     return True
 
