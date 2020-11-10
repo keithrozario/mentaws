@@ -4,7 +4,7 @@ import os
 from configparser import ConfigParser
 from datetime import datetime
 
-from .config import get_platform_config
+from mentaws.config import get_platform_config
 
 platform_config = get_platform_config()
 config_file_path = os.path.join(

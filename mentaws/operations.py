@@ -5,8 +5,8 @@ import sys
 
 import sqlite3
 
-from .config import get_platform_config
-from .cryptographic_operations import setup_key, encrypt_keys, decrypt_keys
+from mentaws.config import get_platform_config
+from mentaws.cryptographic_operations import setup_key, encrypt_keys, decrypt_keys
 
 from typing import List
 
@@ -17,7 +17,7 @@ table_name = config["default_table_name"]
 app_name = config["default_app_name"]
 key_name = config["encryption_key_name"]
 
-sementara_db_path = os.path.join(config["aws_directory"], config["database_file"])
+mentaws_db_path = os.path.join(config["aws_directory"], config["database_file"])
 creds_file_path = os.path.join(config["aws_directory"], config["creds_file_name"])
 
 
@@ -26,10 +26,10 @@ def setup_new_db() -> List[str]:
     Creates a new sqlite database, and populates it with the credentials from the creds file
     """
 
-    if not os.path.isfile(sementara_db_path):
+    if not os.path.isfile(mentaws_db_path):
 
         # Create database
-        conn = sqlite3.connect(sementara_db_path)
+        conn = sqlite3.connect(mentaws_db_path)
         db = conn.cursor()
         db.execute(f"DROP TABLE IF EXISTS {table_name}")
         db.execute(
@@ -62,8 +62,8 @@ def list_profiles_in_db() -> List[str]:
     """
     List all profiles in database
     """
-    if os.path.isfile(sementara_db_path):
-        conn = sqlite3.connect(sementara_db_path)
+    if os.path.isfile(mentaws_db_path):
+        conn = sqlite3.connect(mentaws_db_path)
         conn.row_factory = sqlite3.Row
         db = conn.cursor()
         db.execute(f"SELECT profile FROM {table_name}")
@@ -78,28 +78,35 @@ def list_profiles_in_db() -> List[str]:
     return profiles
 
 
-def get_plaintext_credentials(profiles: str = "") -> List[dict]:
+def get_plaintext_credentials(profiles: str = "", all: bool = False) -> List[dict]:
     """
     Args:
       profiles: comma separated string of aws_profiles to retrieve
+      all: Retrieve all profiles (by default only those with credentials are returned)
     return:
       creds = List of dicts, each with keys (profile, aws_access_key_id, aws_secret_access_key)
     """
 
     creds = list()
-    conn = sqlite3.connect(sementara_db_path)
+    conn = sqlite3.connect(mentaws_db_path)
     conn.row_factory = sqlite3.Row
     db = conn.cursor()
 
-    if len(profiles) == 0:
-        db.execute(f"SELECT * FROM {table_name} WHERE aws_access_key_id != ''")
-    else:
-        profile_list = profiles.split(",")
-        # using the ? designator didn't work for me. Let me know if you know how to use this properly
-        db.execute(
-            f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))} AND aws_access_key_id != ''"
-        )
+    # Get all profiles in DB
+    try:
+        if all:
+            db.execute(f"SELECT * FROM {table_name} ORDER BY profile")
+        elif len(profiles) == 0:
+            db.execute(f"SELECT * FROM {table_name} WHERE aws_access_key_id != '' ORDER BY profile")
+        else:
+            profile_list = profiles.split(",")
+            db.execute(
+                f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))} AND aws_access_key_id != '' ORDER BY profile"
+            )
+    except sqlite3.OperationalError:
+        sys.exit("No database table, DB might has not been setup or is corrupted.")
 
+    # generate dictionary for all fields
     for row in db:
         # Sqlite3 rows are not real dictionaries, do not support easy copying
         temp_row = dict()
@@ -113,12 +120,13 @@ def get_plaintext_credentials(profiles: str = "") -> List[dict]:
             temp_row[key] = other_options[key]
         creds.append(temp_row)
 
-    # append with plaintext keys, we do it this way, so that one call can be made to cryptographic operations, and retrieve the secret key once!
+    # append with plaintext keys, we do it this way, so that only one call is made to get the decryption key
     # This reduces the number of times the user has to enter the keychain password
     plaintext_keys = decrypt_keys(profiles=creds, app_name=app_name, key_name=key_name)
     for cred in creds:
         cred["aws_secret_access_key"] = plaintext_keys[cred["profile"]]
 
+    # return all data back (with plaintext AKIA keys)
     return creds
 
 
@@ -132,9 +140,13 @@ def write_creds_file(config: ConfigParser, replace: bool = True):
       **Future addition**
       replace: if True, replaces entire credentials file. If False, only over-writes existing sections
     """
-
+    
     creds = ConfigParser()
-    creds.read(filenames=[creds_file_path], encoding="utf-8")
+
+    if not replace:
+        creds.read(filenames=[creds_file_path], encoding="utf-8")
+    
+
     creds.read_dict(configparser_to_dict(config))
     with open(creds_file_path, "w") as creds_file:
         creds.write(creds_file)
@@ -171,7 +183,7 @@ def check_new_profiles() -> dict:
 
 def write_creds_to_db(creds: ConfigParser) -> List[str]:
 
-    conn = sqlite3.connect(sementara_db_path)
+    conn = sqlite3.connect(mentaws_db_path)
     db = conn.cursor()
 
     rows_to_write = list()
@@ -195,7 +207,9 @@ def write_creds_to_db(creds: ConfigParser) -> List[str]:
             if option not in ["aws_access_key_id", "aws_secret_access_key"]:
                 other_options[option] = creds.get(section, option)
 
+        temp_profile["other_options"] = json.dumps(other_options)
         rows_to_write.append(temp_profile)
+
 
     # append with encrypted keys, we do it this way, so that one call can be made to cryptographic operations, and retrieve the secret key once!
     # This reduces the number of times the user has to enter the keychain password
@@ -211,7 +225,7 @@ def write_creds_to_db(creds: ConfigParser) -> List[str]:
                 profile,
                 row["aws_access_key_id"],
                 encrypted_keys[profile],
-                json.dumps(other_options),
+                row["other_options"],
             ),
         )
 
@@ -224,7 +238,7 @@ def write_creds_to_db(creds: ConfigParser) -> List[str]:
 
 def remove_profile_from_db(profile_name: str) -> bool:
 
-    conn = sqlite3.connect(sementara_db_path)
+    conn = sqlite3.connect(mentaws_db_path)
     conn.row_factory = sqlite3.Row
     db = conn.cursor()
 
@@ -243,7 +257,7 @@ def remove_profile_from_db(profile_name: str) -> bool:
 
 def check_profile_in_db(profile_name: str) -> bool:
 
-    conn = sqlite3.connect(sementara_db_path)
+    conn = sqlite3.connect(mentaws_db_path)
     conn.row_factory = sqlite3.Row
     db = conn.cursor()
     db.execute(f"SELECT profile FROM {table_name} WHERE profile=?", (profile_name,))
@@ -268,3 +282,13 @@ def creds_file_contents() -> ConfigParser:
     creds.read(filenames=[creds_file_path], encoding="utf-8")
 
     return creds
+
+
+def remove_creds_file() -> str:
+    
+    try:
+        os.remove(mentaws_db_path)
+    except OSError:
+        pass
+
+    return config["database_file"]

@@ -36,7 +36,7 @@ def test_refresh(monkeypatch):
     assert file_age.total_seconds() < 2
 
     for profile in profiles:
-        if not profile == "mentawsFail":
+        if profile in ["default", "mentaws1", "mentaws2"]:
             mentaws_session = boto3.session.Session(profile_name=profile)
             sts_client = mentaws_session.client("sts")
             response = sts_client.get_caller_identity()

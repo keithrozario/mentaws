@@ -1,13 +1,14 @@
 import configparser
 import sys
-import os
 import argparse
+import copy
+import os
 from typing import List
 
-from .__init__ import __version__
-from .config import welcome_message, help_message
-from .aws_operations import get_token, get_region
-from .operations import (
+from mentaws.__init__ import __version__
+from mentaws.config import welcome_message, help_message, unsetup_message, refresh_message
+from mentaws.aws_operations import get_token, get_region
+from mentaws.operations import (
     setup_new_db,
     list_profiles_in_db,
     get_plaintext_credentials,
@@ -16,6 +17,7 @@ from .operations import (
     check_new_profiles,
     check_profile_in_db,
     creds_file_contents,
+    remove_creds_file
 )
 
 
@@ -24,7 +26,7 @@ def main():
     parser = argparse.ArgumentParser(description=welcome_message, add_help=False)
     parser.add_argument(
         "command",
-        choices=["setup", "refresh", "status", "list", "remove", "help"],
+        choices=["setup", "refresh", "status", "list", "remove", "unsetup","help"],
         type=str,
         help="Name of command, must be setup, refresh, list or remove",
     )
@@ -44,39 +46,36 @@ def main():
 
     if len(sys.argv) == 1:
         safe_print(help_message)
-        return 0
+        return "help"
 
     args = parser.parse_args()
     command = args.command
     profiles = args.profiles
 
-    if args.command == "help":
+    if command == "help":
         safe_print(help_message)
-        command = 0
 
-    elif args.command == "setup":
+    elif command == "setup":
         setup()
-        command = 1
 
-    elif args.command == "refresh":
+    elif command == "refresh":
         refresh()
-        command = 2
 
-    elif args.command == "list":
+    elif command == "list":
         list_profiles()
-        command = 3
 
-    elif args.command == "status":
+    elif command == "status":
         status()
-        command = 4
+    
+    elif command == "unsetup":
+        unsetup()
 
-    elif args.command == "remove":
+    elif command == "remove":
         if not profiles == "":
             remove(profiles)
-            comamand = 5
         else:
             safe_print("You must provide a profile(s) using the -p argument")
-            command = -1
+            command = "fail"
 
     return command
 
@@ -145,7 +144,7 @@ def refresh(profiles: str = ""):
 
     # Replace ~/.aws/credentials
     write_creds_file(config=temp_config, replace=False)
-    safe_print(f"\n\nYou're ready to go 🚀🚀 ")
+    safe_print(refresh_message)
 
     return
 
@@ -199,6 +198,34 @@ def status() -> List[dict]:
     return profiles
 
 
+def unsetup() -> bool:
+    """
+    Restores back the long-lived tokens into the credentials file
+    Deletes the mentaws db -- does not actually delete mentaws (hence we call it unsetup)
+    """
+
+    creds = get_plaintext_credentials(all=True)
+    temp_config = configparser.ConfigParser()
+
+    for section in creds:
+        profile = section["profile"]
+        del section["profile"]
+        temp_config[profile] = copy.deepcopy(section)
+
+        # remove empty fields
+        for key in temp_config[profile]:
+            if temp_config[profile][key] == "":
+                del temp_config[profile][key]
+    
+    write_creds_file(config=temp_config, replace=True)
+    mentaws_db_path = remove_creds_file()
+
+    print(f"{mentaws_db_path} has been been deleted, it's like we were never here")
+    print(unsetup_message)
+    
+    return True
+
+
 def yes_or_no(question):
     reply = str(input(question + " (y/n): ")).lower().strip()
     if reply[0] == "y":
@@ -211,7 +238,7 @@ def safe_print(print_string: str) -> None:
     """
     Windows Command prompt (and older terminals), don't support emojis
     The 'smart' thing to do was to remove emojis...but I implemented this instead.
-    Emoji's are the future, and we shouldn't delay the future because some folks run cmd.exe (fight me!)
+    Emoji's are the future, and we can't delay the future because some folks run cmd.exe (fight me!)
     """
 
     try:

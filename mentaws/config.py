@@ -48,7 +48,11 @@ Example commands:
 
 """
 
-epilogue_message = """And remember to always stay fresh! 😎"""
+refresh_message = """
+You're all fresh 😎
+"""
+
+unsetup_message = """So long, farewell, auf Wiedersehen, goodbye 😢"""
 
 
 def get_platform_config() -> dict:

@@ -159,6 +159,12 @@ def test_add_profiles(monkeypatch):
         platform_config["aws_directory"], platform_config["creds_file_name"]
     )
     config.read([creds_path, f"{creds_path}.copy"])
+
+    # remove extra fields
+    config.remove_option('mentaws1', 'aws_session_token')
+    config.remove_option('mentaws1', 'aws_token_expiry_time_human')
+    config.remove_option('mentaws1', 'aws_token_expiry_time_machine')
+
     with open(creds_path, "w") as creds_file:
         config.write(creds_file)
 

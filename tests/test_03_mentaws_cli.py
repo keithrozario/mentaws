@@ -39,11 +39,11 @@ def test_help(monkeypatch):
     # Run
     monkeypatch.setattr("sys.argv", ["mentaws"])
     command = main.main()
-    assert command == 0
+    assert command == "help"
 
     monkeypatch.setattr("sys.argv", ["mentaws", "help"])
     command = main.main()
-    assert command == 0
+    assert command == "help"
 
 
 def test_other_commands(monkeypatch):
@@ -55,27 +55,22 @@ def test_other_commands(monkeypatch):
     # setup
     monkeypatch.setattr("sys.argv", ["mentaws", "setup"])
     command = main.main()
-    assert command == 1
+    assert command == "setup"
 
     # List
     monkeypatch.setattr("sys.argv", ["mentaws", "list"])
     command = main.main()
-    assert command == 3
+    assert command == "list"
 
     # Status
     monkeypatch.setattr("sys.argv", ["mentaws", "status"])
     command = main.main()
-    assert command == 4
+    assert command == "status"
 
     # Status
     monkeypatch.setattr("sys.argv", ["mentaws", "remove"])
     command = main.main()
-    assert command == -1
-
-    # Status
-    monkeypatch.setattr("sys.argv", ["mentaws", "remove"])
-    command = main.main()
-    assert command == -1
+    assert command == 'fail'
 
     # # Invalid
     # monkeypatch.setattr("sys.argv", ["mentaws", "invalidCommand"])
@@ -99,4 +94,4 @@ def test_refresh(monkeypatch):
     # Refresh
     monkeypatch.setattr("sys.argv", ["mentaws", "refresh"])
     command = main.main()
-    assert command == 2
+    assert command == "refresh"
