@@ -40,8 +40,12 @@ def get_token(
             "aws_access_key_id": response["Credentials"]["AccessKeyId"],
             "aws_secret_access_key": response["Credentials"]["SecretAccessKey"],
             "aws_session_token": response["Credentials"]["SessionToken"],
-            "aws_token_expiry_time_human": format_time(response["Credentials"]["Expiration"]),
-            "aws_token_expiry_time_machine": (response["Credentials"]["Expiration"]).isoformat(),
+            "aws_token_expiry_time_human": format_time(
+                response["Credentials"]["Expiration"]
+            ),
+            "aws_token_expiry_time_machine": (
+                response["Credentials"]["Expiration"]
+            ).isoformat(),
         }
     except botocore.exceptions.ClientError:
         token = {
@@ -79,8 +83,8 @@ def get_region(profile: str) -> str:
     try:
         region = aws_config[f"profile {profile}"]["region"]
     except KeyError:
-        region = aws_config['default']['region']
-    
+        region = aws_config["default"]["region"]
+
     return region
 
 

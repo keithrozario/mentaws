@@ -23,21 +23,23 @@ def main():
 
     parser = argparse.ArgumentParser(description=welcome_message, add_help=False)
     parser.add_argument(
-        'command',
-        choices=['setup', 'refresh', 'status','list','remove', 'help'],
+        "command",
+        choices=["setup", "refresh", "status", "list", "remove", "help"],
         type=str,
-        help="Name of command, must be setup, refresh, list or remove"
+        help="Name of command, must be setup, refresh, list or remove",
     )
     parser.add_argument(
-        '-p','--profiles',
+        "-p",
+        "--profiles",
         type=str,
-        default='',
-        help="Comma-separate list of profiles to be actioned on"
+        default="",
+        help="Comma-separate list of profiles to be actioned on",
     )
     parser.add_argument(
-        '--version', action="version",
+        "--version",
+        action="version",
         version=__version__,
-        help='Display the version of this tool'
+        help="Display the version of this tool",
     )
 
     if len(sys.argv) == 1:
@@ -60,16 +62,16 @@ def main():
         refresh()
         command = 2
 
-    elif args.command  == "list":
+    elif args.command == "list":
         list_profiles()
         command = 3
-    
-    elif args.command  == "status":
+
+    elif args.command == "status":
         status()
         command = 4
 
-    elif args.command  == "remove":
-        if not profiles == '':
+    elif args.command == "remove":
+        if not profiles == "":
             remove(profiles)
             comamand = 5
         else:
@@ -84,7 +86,9 @@ def setup():
     profiles = setup_new_db()
 
     if profiles is None:
-        safe_print("It looks like mentaws is already setup, use mentaws refresh or mentaws list")
+        safe_print(
+            "It looks like mentaws is already setup, use mentaws refresh or mentaws list"
+        )
     elif len(profiles) > 0:
         safe_print(f"The following {len(profiles)} profiles were added to mentaws:")
         safe_print(f"\n👷🏿 Profile{' ' * 20}")
@@ -104,7 +108,7 @@ def list_profiles():
     return profiles
 
 
-def refresh(profiles: str=""):
+def refresh(profiles: str = ""):
     """
     Args:
       profiles: comma delimited string of profiles to refresh for
@@ -148,7 +152,7 @@ def refresh(profiles: str=""):
 
 def remove(profiles: str) -> bool:
 
-    profiles_list = profiles.split(',')
+    profiles_list = profiles.split(",")
 
     for profile_name in profiles_list:
         if check_profile_in_db(profile_name):
@@ -164,33 +168,36 @@ def remove(profiles: str) -> bool:
 
     return deleted
 
+
 def status() -> List[dict]:
     """
     List out all Profiles, eys and expiry times
     """
-    
+
     creds = creds_file_contents()
     profiles = list()
 
     safe_print(f"\n👷🏿 Profile{' ' * 20}🔑 Key:{' '*18}⏰ Tokens expire at")
-    
+
     for section in creds.sections():
         if not section == "DEFAULT":
             try:
                 safe_print(
                     f"   {section:<30}{creds[section]['aws_access_key_id']:<25}{creds[section]['aws_token_expiry_time_human']}"
                 )
-                temp = {"profile": section, "aws_access_key_id": creds[section]['aws_access_key_id'], "token_expiry": creds[section]['aws_token_expiry_time_human']}
+                temp = {
+                    "profile": section,
+                    "aws_access_key_id": creds[section]["aws_access_key_id"],
+                    "token_expiry": creds[section]["aws_token_expiry_time_human"],
+                }
             except KeyError:
                 # Sections without expiry time
-                safe_print(
-                    f"   {section:<30}-{' '*24}No Token Expiry"
-                )
-                temp = {'profile': section}
+                safe_print(f"   {section:<30}-{' '*24}No Token Expiry")
+                temp = {"profile": section}
             profiles.append(temp)
-        
 
     return profiles
+
 
 def yes_or_no(question):
     reply = str(input(question + " (y/n): ")).lower().strip()
@@ -200,7 +207,7 @@ def yes_or_no(question):
         return False
 
 
-def safe_print(print_string: str)-> None:
+def safe_print(print_string: str) -> None:
     """
     Windows Command prompt (and older terminals), don't support emojis
     The 'smart' thing to do was to remove emojis...but I implemented this instead.
@@ -210,6 +217,6 @@ def safe_print(print_string: str)-> None:
     try:
         print(print_string)
     except UnicodeEncodeError:
-        print(print_string.encode('ascii', 'ignore').decode('ascii'))
+        print(print_string.encode("ascii", "ignore").decode("ascii"))
 
     return None

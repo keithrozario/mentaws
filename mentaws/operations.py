@@ -71,7 +71,7 @@ def list_profiles_in_db() -> List[str]:
         profiles = [row["profile"] for row in db]
 
         conn.close()
-    
+
     else:
         sys.exit("No database table, DB might has not been setup or is corrupted.")
 
@@ -94,9 +94,11 @@ def get_plaintext_credentials(profiles: str = "") -> List[dict]:
     if len(profiles) == 0:
         db.execute(f"SELECT * FROM {table_name} WHERE aws_access_key_id != ''")
     else:
-        profile_list = profiles.split(',')
+        profile_list = profiles.split(",")
         # using the ? designator didn't work for me. Let me know if you know how to use this properly
-        db.execute(f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))} AND aws_access_key_id != ''")
+        db.execute(
+            f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))} AND aws_access_key_id != ''"
+        )
 
     for row in db:
         # Sqlite3 rows are not real dictionaries, do not support easy copying
@@ -105,22 +107,22 @@ def get_plaintext_credentials(profiles: str = "") -> List[dict]:
             temp_row[key] = row[key]
 
         # handle additional fields
-        other_options = json.loads(temp_row['other_options'])
-        del temp_row['other_options']
+        other_options = json.loads(temp_row["other_options"])
+        del temp_row["other_options"]
         for key in other_options.keys():
             temp_row[key] = other_options[key]
         creds.append(temp_row)
 
     # append with plaintext keys, we do it this way, so that one call can be made to cryptographic operations, and retrieve the secret key once!
-    # This reduces the number of times the user has to enter the keychain password  
+    # This reduces the number of times the user has to enter the keychain password
     plaintext_keys = decrypt_keys(profiles=creds, app_name=app_name, key_name=key_name)
     for cred in creds:
-        cred['aws_secret_access_key'] = plaintext_keys[cred['profile']]
+        cred["aws_secret_access_key"] = plaintext_keys[cred["profile"]]
 
     return creds
 
 
-def write_creds_file(config: ConfigParser, replace: bool=True):
+def write_creds_file(config: ConfigParser, replace: bool = True):
 
     """
     Writes out data in config to credentials file
@@ -158,7 +160,6 @@ def check_new_profiles() -> dict:
         except NoOptionError:
             pass
 
-
     # Write new profiles to database
     if len(new_profiles.keys()) > 0:
         new_creds = ConfigParser()
@@ -177,37 +178,41 @@ def write_creds_to_db(creds: ConfigParser) -> List[str]:
 
     for k, section in enumerate(creds.sections()):
         temp_profile = dict()
-        temp_profile['profile'] = section
+        temp_profile["profile"] = section
 
         try:
-            temp_profile['aws_access_key_id'] = creds.get(section, "aws_access_key_id")
-            temp_profile['aws_secret_access_key'] = creds.get(section, "aws_secret_access_key")
+            temp_profile["aws_access_key_id"] = creds.get(section, "aws_access_key_id")
+            temp_profile["aws_secret_access_key"] = creds.get(
+                section, "aws_secret_access_key"
+            )
 
         except NoOptionError:  # doesn't have credentials
-            temp_profile['aws_access_key_id'] = ""
-            temp_profile['aws_secret_access_key'] = ""
-            
+            temp_profile["aws_access_key_id"] = ""
+            temp_profile["aws_secret_access_key"] = ""
 
         other_options = dict()
         for option in creds[section]:
-            if option not in ['aws_access_key_id','aws_secret_access_key']:
+            if option not in ["aws_access_key_id", "aws_secret_access_key"]:
                 other_options[option] = creds.get(section, option)
-        
+
         rows_to_write.append(temp_profile)
-    
+
     # append with encrypted keys, we do it this way, so that one call can be made to cryptographic operations, and retrieve the secret key once!
     # This reduces the number of times the user has to enter the keychain password
     encrypted_keys = encrypt_keys(
-        profiles=rows_to_write,
-        app_name=app_name, 
-        key_name=key_name
+        profiles=rows_to_write, app_name=app_name, key_name=key_name
     )
 
     for row in rows_to_write:
-        profile = row['profile']
+        profile = row["profile"]
         db.execute(
             f"INSERT INTO {table_name} (profile, aws_access_key_id, aws_secret_access_key, other_options) VALUES(?,?,?,?)",
-            (profile, row['aws_access_key_id'], encrypted_keys[profile], json.dumps(other_options)),
+            (
+                profile,
+                row["aws_access_key_id"],
+                encrypted_keys[profile],
+                json.dumps(other_options),
+            ),
         )
 
     conn.commit()
@@ -244,7 +249,7 @@ def check_profile_in_db(profile_name: str) -> bool:
     db.execute(f"SELECT profile FROM {table_name} WHERE profile=?", (profile_name,))
 
     row = [item for item in db]
-    if len(row) > 0 :
+    if len(row) > 0:
         response = True
     else:
         response = False
@@ -258,7 +263,7 @@ def configparser_to_dict(config: ConfigParser) -> dict:
 
 
 def creds_file_contents() -> ConfigParser:
-    
+
     creds = ConfigParser()
     creds.read(filenames=[creds_file_path], encoding="utf-8")
 

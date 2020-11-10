@@ -12,6 +12,7 @@ from mentaws import main
 
 from .settings import platform_config, test_key, profiles
 
+
 def mock_get_key(*args, **kwargs):
     return test_key
 
@@ -26,7 +27,7 @@ def test_refresh(monkeypatch):
         platform_config["aws_directory"], platform_config["creds_file_name"]
     )
 
-    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+    monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
     main.refresh()
 
@@ -35,8 +36,8 @@ def test_refresh(monkeypatch):
     assert file_age.total_seconds() < 2
 
     for profile in profiles:
-        if not profile == 'mentawsFail':
+        if not profile == "mentawsFail":
             mentaws_session = boto3.session.Session(profile_name=profile)
-            sts_client = mentaws_session.client('sts')
+            sts_client = mentaws_session.client("sts")
             response = sts_client.get_caller_identity()
-            assert response['Account'] == '880797093042'
+            assert response["Account"] == "880797093042"

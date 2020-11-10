@@ -10,7 +10,7 @@ config = {
     "database_file": "mentaws.db",
     "creds_file_name": "credentials",
     "encryption_key_name": "encryption_key",
-    "config_file_name": "config", # AWS config name
+    "config_file_name": "config",  # AWS config name
     "Darwin": {
         "aws_directory": "/Users/{user_name}/.aws",
     },
@@ -19,7 +19,7 @@ config = {
     },
     "Windows": {
         "aws_directory": "{user_profile}\\.aws",
-    }
+    },
 }
 
 welcome_message = """Welcome to mentaws!"""
@@ -61,10 +61,9 @@ def get_platform_config() -> dict:
         platform.system()
     ]  # platform.system() is a built-in python functionality
 
-    
-    if platform.system() == 'Windows':
+    if platform.system() == "Windows":
         platform_config["aws_directory"] = platform_config["aws_directory"].format(
-            user_profile=os.environ['USERPROFILE']
+            user_profile=os.environ["USERPROFILE"]
         )
     else:
         platform_config["aws_directory"] = platform_config["aws_directory"].format(
@@ -72,7 +71,7 @@ def get_platform_config() -> dict:
         )
 
     for key in config.keys():
-        if key not in ['Linux', 'Darwin', 'Java', 'Windows']:
+        if key not in ["Linux", "Darwin", "Java", "Windows"]:
             platform_config[key] = config[key]
 
     return platform_config

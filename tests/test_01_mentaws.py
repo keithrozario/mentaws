@@ -20,13 +20,14 @@ class MockClient:
     @staticmethod
     def get_session_token(DurationSeconds=3600):
         return {
-            'Credentials': {
-            'AccessKeyId': 'ASIA1234567890',
-            'SecretAccessKey': 'kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct',
-            'SessionToken': 'kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct?<>!@#$',
-            'Expiration': datetime.now() + timedelta(seconds=DurationSeconds)
+            "Credentials": {
+                "AccessKeyId": "ASIA1234567890",
+                "SecretAccessKey": "kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct",
+                "SessionToken": "kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct?<>!@#$",
+                "Expiration": datetime.now() + timedelta(seconds=DurationSeconds),
             }
         }
+
 
 # mock client for session token
 class MockClient_2:
@@ -35,11 +36,11 @@ class MockClient_2:
     @staticmethod
     def get_session_token(DurationSeconds=3600):
         return {
-            'Credentials': {
-            'AccessKeyId': 'ASIA999999999',
-            'SecretAccessKey': 'kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct',
-            'SessionToken': 'kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct?<>!@#$',
-            'Expiration': datetime.now() + timedelta(seconds=DurationSeconds)
+            "Credentials": {
+                "AccessKeyId": "ASIA999999999",
+                "SecretAccessKey": "kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct",
+                "SessionToken": "kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct?<>!@#$",
+                "Expiration": datetime.now() + timedelta(seconds=DurationSeconds),
             }
         }
 
@@ -49,11 +50,11 @@ def mock_get_key(*args, **kwargs):
 
 
 def mock_set_key(*args, **kwargs):
-    return 
+    return
 
 
 def test_version():
-    assert __version__ == '0.5.0'
+    assert __version__ == "0.5.1"
 
 
 def test_setup(monkeypatch):
@@ -62,10 +63,10 @@ def test_setup(monkeypatch):
     Test the setup command
     """
 
-    monkeypatch.setattr(keyring,"set_password", mock_set_key)
-    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+    monkeypatch.setattr(keyring, "set_password", mock_set_key)
+    monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
-    # Run setup    
+    # Run setup
     profiles = main.setup()
     db_path = os.path.join(
         platform_config["aws_directory"], platform_config["database_file"]
@@ -86,11 +87,11 @@ def test_refresh_mock(monkeypatch):
     )
 
     def mock_boto3_client(*args, **kwargs):
-        if args[0] == 'sts':
+        if args[0] == "sts":
             return MockClient()
-    
-    monkeypatch.setattr(boto3,"client", mock_boto3_client)
-    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+
+    monkeypatch.setattr(boto3, "client", mock_boto3_client)
+    monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
     main.refresh()
 
@@ -103,8 +104,8 @@ def test_status():
 
     statuses = main.status()
     for status in statuses:
-        if status['profile'] not in ['testassumptionprofile']:
-            assert status['aws_access_key_id'] == "ASIA1234567890"
+        if status["profile"] not in ["testassumptionprofile"]:
+            assert status["aws_access_key_id"] == "ASIA1234567890"
 
 
 def test_list_profiles(monkeypatch):
@@ -112,18 +113,18 @@ def test_list_profiles(monkeypatch):
     """
     Test the list profiles command
     """
-    
-    no = StringIO('n\n')
-    monkeypatch.setattr('sys.stdin', no)
+
+    no = StringIO("n\n")
+    monkeypatch.setattr("sys.stdin", no)
 
     profiles = main.list_profiles()
     assert len(profiles) == num_profiles
-    assert 'mentaws1' in profiles
+    assert "mentaws1" in profiles
 
-    main.remove('mentaws1')
+    main.remove("mentaws1")
     profiles = main.list_profiles()
     assert len(profiles) == num_profiles
-    assert 'mentaws1' in profiles
+    assert "mentaws1" in profiles
 
 
 def test_delete_profile_yes(monkeypatch):
@@ -132,15 +133,15 @@ def test_delete_profile_yes(monkeypatch):
     Test the delete profile command, answering 'yes' when prompted
     """
     global num_profiles
-    yes = StringIO('y\n')
-    monkeypatch.setattr('sys.stdin', yes)
+    yes = StringIO("y\n")
+    monkeypatch.setattr("sys.stdin", yes)
 
-    main.remove('mentaws1')
+    main.remove("mentaws1")
     profiles = main.list_profiles()
 
     num_profiles -= 1
     assert len(profiles) == num_profiles
-    assert 'mentaws1' not in profiles
+    assert "mentaws1" not in profiles
 
 
 def test_add_profiles(monkeypatch):
@@ -158,26 +159,26 @@ def test_add_profiles(monkeypatch):
         platform_config["aws_directory"], platform_config["creds_file_name"]
     )
     config.read([creds_path, f"{creds_path}.copy"])
-    with open(creds_path, 'w') as creds_file:
+    with open(creds_path, "w") as creds_file:
         config.write(creds_file)
 
     def mock_boto3_client(*args, **kwargs):
-        if args[0] == 'sts':
+        if args[0] == "sts":
             return MockClient()
 
-    monkeypatch.setattr(boto3,"client", mock_boto3_client)
-    monkeypatch.setattr(keyring,"set_password", mock_set_key)
-    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+    monkeypatch.setattr(boto3, "client", mock_boto3_client)
+    monkeypatch.setattr(keyring, "set_password", mock_set_key)
+    monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
     profiles = main.list_profiles()
     assert len(profiles) == num_profiles
-    assert 'mentaws1' not in profiles
+    assert "mentaws1" not in profiles
 
     main.refresh()
     profiles = main.list_profiles()
     num_profiles += 1
     assert len(profiles) == num_profiles
-    assert 'mentaws1' in profiles
+    assert "mentaws1" in profiles
 
 
 def test_refresh_some_profiles(monkeypatch):
@@ -190,14 +191,14 @@ def test_refresh_some_profiles(monkeypatch):
     )
 
     def mock_boto3_client(*args, **kwargs):
-        if args[0] == 'sts':
+        if args[0] == "sts":
             return MockClient_2()
 
-    monkeypatch.setattr(boto3,"client", mock_boto3_client)
-    monkeypatch.setattr(keyring,"set_password", mock_set_key)
-    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+    monkeypatch.setattr(boto3, "client", mock_boto3_client)
+    monkeypatch.setattr(keyring, "set_password", mock_set_key)
+    monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
-    main.refresh('mentaws1,mentaws2')
+    main.refresh("mentaws1,mentaws2")
 
     file_stat = os.stat(creds_path)
     file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
@@ -208,23 +209,22 @@ def test_refresh_some_profiles(monkeypatch):
 
     # for profile in profiles:
     #     assert profile in new_creds.sections()
-    
-    assert new_creds['mentaws1']['aws_access_key_id'] == 'ASIA999999999'
-    assert new_creds['mentaws2']['aws_access_key_id'] == 'ASIA999999999'
-    assert new_creds['mentaws3']['aws_access_key_id'] == 'ASIA1234567890'
-    assert new_creds['default']['aws_access_key_id'] == 'ASIA1234567890'
+
+    assert new_creds["mentaws1"]["aws_access_key_id"] == "ASIA999999999"
+    assert new_creds["mentaws2"]["aws_access_key_id"] == "ASIA999999999"
+    assert new_creds["mentaws3"]["aws_access_key_id"] == "ASIA1234567890"
+    assert new_creds["default"]["aws_access_key_id"] == "ASIA1234567890"
 
 
 def test_region_setting():
 
-    assert aws_operations.get_region('default') == 'ap-southeast-1'
-    assert aws_operations.get_region('mentaws1') == 'ap-southeast-1'
-    assert aws_operations.get_region('mentaws2') == 'ap-southeast-2'
-    assert aws_operations.get_region('mentaws3') == 'ap-southeast-1'
+    assert aws_operations.get_region("default") == "ap-southeast-1"
+    assert aws_operations.get_region("mentaws1") == "ap-southeast-1"
+    assert aws_operations.get_region("mentaws2") == "ap-southeast-2"
+    assert aws_operations.get_region("mentaws3") == "ap-southeast-1"
 
 
 def test_refresh(monkeypatch):
-
     """
     Test the refresh command, with **real** AWS Client, (real call to AWS)
     """
@@ -233,8 +233,8 @@ def test_refresh(monkeypatch):
         platform_config["aws_directory"], platform_config["creds_file_name"]
     )
 
-    monkeypatch.setattr(keyring,"set_password", mock_set_key)
-    monkeypatch.setattr(keyring,"get_password", mock_get_key)
+    monkeypatch.setattr(keyring, "set_password", mock_set_key)
+    monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
     main.refresh()
 
@@ -243,8 +243,8 @@ def test_refresh(monkeypatch):
     assert file_age.total_seconds() < 2
 
     for profile in profiles:
-        if not profile == 'mentawsFail':
+        if not profile == "mentawsFail":
             mentaws_session = boto3.session.Session(profile_name=profile)
-            sts_client = mentaws_session.client('sts')
+            sts_client = mentaws_session.client("sts")
             response = sts_client.get_caller_identity()
-            assert response['Account'] == '880797093042'
+            assert response["Account"] == "880797093042"

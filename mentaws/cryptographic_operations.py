@@ -53,16 +53,19 @@ def decrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
 
     try:
         for profile in profiles:
-            if not profile['aws_secret_access_key'] == "":
-                aws_secret_access_key = key.decrypt(profile['aws_secret_access_key'].encode("utf-8"))
-                decrypted_keys[profile['profile']] = aws_secret_access_key.decode('utf-8')
-            else: 
-                decrypted_keys[profile['profile']] = ""
+            if not profile["aws_secret_access_key"] == "":
+                aws_secret_access_key = key.decrypt(
+                    profile["aws_secret_access_key"].encode("utf-8")
+                )
+                decrypted_keys[profile["profile"]] = aws_secret_access_key.decode(
+                    "utf-8"
+                )
+            else:
+                decrypted_keys[profile["profile"]] = ""
     except InvalidToken:
         sys.exit("Password Error!! Please check password and try again")
 
     return decrypted_keys
-
 
 
 def encrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
@@ -78,12 +81,16 @@ def encrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
 
     key = get_key(app_name, key_name)
     encrypted_keys = dict()
-    
+
     for profile in profiles:
-        if not profile['aws_secret_access_key'] == "":
-            encrypted_aws_secret_access_key = key.encrypt(profile['aws_secret_access_key'].encode("utf-8"))
-            encrypted_keys[profile['profile']] = encrypted_aws_secret_access_key.decode('utf-8')
-        else: 
-            encrypted_keys[profile['profile']] = ""
+        if not profile["aws_secret_access_key"] == "":
+            encrypted_aws_secret_access_key = key.encrypt(
+                profile["aws_secret_access_key"].encode("utf-8")
+            )
+            encrypted_keys[profile["profile"]] = encrypted_aws_secret_access_key.decode(
+                "utf-8"
+            )
+        else:
+            encrypted_keys[profile["profile"]] = ""
 
     return encrypted_keys
