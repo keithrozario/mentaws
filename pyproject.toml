@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mentaws"
-version = "0.5.2"
+version = "0.5.3"
 description = "moMENTary AWS credentials"
 authors = ["keithrozario <keith@keithrozario.com>"]
 
@@ -10,6 +10,7 @@ boto3 = "^1.14.20"
 cryptography = "^2.9.2"
 PyYAML = "^5.3.1"
 keyring = "^21.4.0"
+click = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6"
