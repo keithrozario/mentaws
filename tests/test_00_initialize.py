@@ -1,5 +1,3 @@
-from mentaws import main
-
 import pytest
 import os
 
@@ -51,14 +49,3 @@ def test_setup_config_file():
         dst.write(src.read())
 
     assert os.path.exists(settings.config_file_path) == True
-
-
-def test_not_yet_setup():
-
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        main.refresh()
-    assert pytest_wrapped_e.type == SystemExit
-
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        main.list_profiles()
-    assert pytest_wrapped_e.type == SystemExit

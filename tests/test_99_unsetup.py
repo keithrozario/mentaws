@@ -6,12 +6,20 @@ import keyring
 import tests.settings as settings
 
 from mentaws import main
+from mentaws import config as mentaws_config
+
+from click.testing import CliRunner
+import pytest
+
+@pytest.fixture(scope="module")
+def runner():
+    return CliRunner()
 
 def mock_get_key(*args, **kwargs):
     return settings.test_key
 
 
-def test_unsetup(monkeypatch):
+def test_unsetup(runner, monkeypatch):
     """
     Test unsetup
     """
@@ -19,9 +27,9 @@ def test_unsetup(monkeypatch):
     monkeypatch.setattr(keyring, "get_password", mock_get_key)
     
     # unsetup
-    monkeypatch.setattr("sys.argv", ["mentaws", "unsetup"])
-    command = main.main()
-    assert command == "unsetup"
+    result = runner.invoke(main.main, ['unsetup'])
+    assert result.exit_code == 0
+    assert mentaws_config.unsetup_message in result.output
     
     assert os.path.isdir(settings.platform_config["aws_directory"]) == True
     assert os.path.exists(settings.creds_file_path) == True

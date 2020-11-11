@@ -10,14 +10,20 @@ import boto3
 
 from mentaws import main
 
-from .settings import platform_config, test_key, profiles
+from tests.settings import platform_config, test_key, profiles
 
+from click.testing import CliRunner
+import pytest
 
 def mock_get_key(*args, **kwargs):
     return test_key
 
+@pytest.fixture(scope="module")
+def runner():
+    return CliRunner()
 
-def test_refresh(monkeypatch):
+
+def test_refresh(runner, monkeypatch):
 
     """
     Test the refresh command, with **real** AWS Client, (real call to AWS)
@@ -29,15 +35,15 @@ def test_refresh(monkeypatch):
 
     monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
-    main.refresh()
+    result = runner.invoke(main.main, ['refresh','-p','default,mentaws1,mentaws2,mentawsFail'])
+    assert result.exit_code == 0
 
     file_stat = os.stat(creds_path)
     file_age = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
     assert file_age.total_seconds() < 2
 
-    for profile in profiles:
-        if profile in ["default", "mentaws1", "mentaws2"]:
-            mentaws_session = boto3.session.Session(profile_name=profile)
-            sts_client = mentaws_session.client("sts")
-            response = sts_client.get_caller_identity()
-            assert response["Account"] == "880797093042"
+    for profile in ["default", "mentaws1", "mentaws2"]:
+        mentaws_session = boto3.session.Session(profile_name=profile)
+        sts_client = mentaws_session.client("sts")
+        response = sts_client.get_caller_identity()
+        assert response["Account"] == "880797093042"

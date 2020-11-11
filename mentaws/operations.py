@@ -92,17 +92,28 @@ def get_plaintext_credentials(profiles: str = "", all: bool = False) -> List[dic
     conn.row_factory = sqlite3.Row
     db = conn.cursor()
 
+    
     # Get all profiles in DB
     try:
+        # Select all profiles (even those without creds)
         if all:
             db.execute(f"SELECT * FROM {table_name} ORDER BY profile")
+        # Select only profiles with creds
         elif len(profiles) == 0:
             db.execute(f"SELECT * FROM {table_name} WHERE aws_access_key_id != '' ORDER BY profile")
         else:
             profile_list = profiles.split(",")
-            db.execute(
-                f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))} AND aws_access_key_id != '' ORDER BY profile"
-            )
+            # Select only one profile
+            if len(profile_list) == 1:
+                db.execute(
+                    f"SELECT * FROM {table_name} WHERE profile = ? AND aws_access_key_id != '' ORDER BY profile",
+                    (profile_list[0],)
+                )
+            # Select a list of profiles
+            else:
+                db.execute(
+                    f"SELECT * FROM {table_name} WHERE profile IN {(str(tuple(profile_list)))} AND aws_access_key_id != '' ORDER BY profile"
+                )
     except sqlite3.OperationalError:
         sys.exit("No database table, DB might has not been setup or is corrupted.")
 
@@ -284,7 +295,7 @@ def creds_file_contents() -> ConfigParser:
     return creds
 
 
-def remove_creds_file() -> str:
+def remove_mentaws_db() -> str:
     
     try:
         os.remove(mentaws_db_path)

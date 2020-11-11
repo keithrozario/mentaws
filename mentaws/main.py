@@ -1,12 +1,12 @@
 import configparser
 import sys
-import argparse
 import copy
 import os
 from typing import List
 
+import click
+
 from mentaws.__init__ import __version__
-from mentaws.config import welcome_message, help_message, unsetup_message, refresh_message
 from mentaws.aws_operations import get_token, get_region
 from mentaws.operations import (
     setup_new_db,
@@ -17,106 +17,51 @@ from mentaws.operations import (
     check_new_profiles,
     check_profile_in_db,
     creds_file_contents,
-    remove_creds_file
+    remove_mentaws_db
 )
+import mentaws.config as mentaws_config
 
 
+@click.group()
 def main():
-
-    parser = argparse.ArgumentParser(description=welcome_message, add_help=False)
-    parser.add_argument(
-        "command",
-        choices=["setup", "refresh", "status", "list", "remove", "unsetup","help"],
-        type=str,
-        help="Name of command, must be setup, refresh, list or remove",
-    )
-    parser.add_argument(
-        "-p",
-        "--profiles",
-        type=str,
-        default="",
-        help="Comma-separate list of profiles to be actioned on",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=__version__,
-        help="Display the version of this tool",
-    )
-
-    if len(sys.argv) == 1:
-        safe_print(help_message)
-        return "help"
-
-    args = parser.parse_args()
-    command = args.command
-    profiles = args.profiles
-
-    if command == "help":
-        safe_print(help_message)
-
-    elif command == "setup":
-        setup()
-
-    elif command == "refresh":
-        refresh()
-
-    elif command == "list":
-        list_profiles()
-
-    elif command == "status":
-        status()
-    
-    elif command == "unsetup":
-        unsetup()
-
-    elif command == "remove":
-        if not profiles == "":
-            remove(profiles)
-        else:
-            safe_print("You must provide a profile(s) using the -p argument")
-            command = "fail"
-
-    return command
+    pass
 
 
+@main.command()
 def setup():
-
+    """
+    First time setup of mentaws.
+    """
     profiles = setup_new_db()
 
     if profiles is None:
-        safe_print(
-            "It looks like mentaws is already setup, use mentaws refresh or mentaws list"
-        )
+        safe_print(mentaws_config.already_setup_message)
     elif len(profiles) > 0:
         safe_print(f"The following {len(profiles)} profiles were added to mentaws:")
         safe_print(f"\n👷🏿 Profile{' ' * 20}")
         for k, profile in enumerate(profiles):
             safe_print(f"  {k+1:2}.{profile:<30}")
+        safe_print(mentaws_config.setup_message)
     elif len(profiles) == 0:
         safe_print("🤔 No profiles were found in the aws credentials file")
 
     return profiles
 
 
-def list_profiles():
-    profiles = list_profiles_in_db()
-    safe_print(f"\n👷🏿 Profile{' ' * 20}")
-    for k, profile in enumerate(profiles):
-        safe_print(f"{k+1:2}. {profile:<30}")
-    return profiles
-
-
+@main.command()
+@click.option('--profiles', '-p', 
+    help='Comma separated list of profiles to refresh (e.g. profile1,profile2)',
+    default=""
+)
 def refresh(profiles: str = ""):
     """
-    Args:
-      profiles: comma delimited string of profiles to refresh for
+    Refreshes AWS credentials in security file.
     """
 
     new_profiles = check_new_profiles()
     if len(new_profiles) > 0:
         safe_print(
-            f"Found {len(new_profiles)} new profiles in credentials file, added these to mentaws:"
+            f"\nFound {len(new_profiles)} new profiles in credentials file, added these to mentaws:"
         )
         for profile in new_profiles:
             safe_print(f"{profile}")
@@ -127,7 +72,7 @@ def refresh(profiles: str = ""):
     # Generate temp credentials
     temp_config = configparser.ConfigParser()
 
-    safe_print(f"Generating temporary tokens for {len(creds)} profiles")
+    safe_print(f"\nGenerating temporary tokens for {len(creds)} profiles")
     safe_print(f"\n👷🏿 Profile{' ' * 20}🌎 Region:{' '*12}⏰ Tokens expire at")
     for section in creds:
 
@@ -144,33 +89,37 @@ def refresh(profiles: str = ""):
 
     # Replace ~/.aws/credentials
     write_creds_file(config=temp_config, replace=False)
-    safe_print(refresh_message)
+    safe_print(mentaws_config.refresh_message)
 
     return
 
 
-def remove(profiles: str) -> bool:
-
+@main.command()
+@click.option('--profiles', '-p', 
+    help='Comma separated list of profiles to remove (e.g. profile1,profile2)',
+    required=True
+)
+@click.confirmation_option(prompt=f'Deleting a profile is irreversible, are you sure?')
+def remove(profiles: str="") -> bool:
+    """
+    Removes an AWS profile from mentaws [REQUIRES -p option].
+    """
     profiles_list = profiles.split(",")
 
     for profile_name in profiles_list:
         if check_profile_in_db(profile_name):
-            if yes_or_no(f"Are you sure you want to delete {profile_name}?"):
                 remove_profile_from_db(profile_name)
                 safe_print(f"Profile {profile_name} was deleted")
-                deleted = True
-            else:
-                deleted = False
         else:
             safe_print(f"Profile {profile_name} not found")
-            deleted = False
 
-    return deleted
+    return True
 
 
+@main.command()
 def status() -> List[dict]:
     """
-    List out all Profiles, eys and expiry times
+    List out all Profiles, key IDs and expiry times of tokens
     """
 
     creds = creds_file_contents()
@@ -194,13 +143,16 @@ def status() -> List[dict]:
                 safe_print(f"   {section:<30}-{' '*24}No Token Expiry")
                 temp = {"profile": section}
             profiles.append(temp)
+    
+    safe_print("")
 
     return profiles
 
 
+@main.command()
 def unsetup() -> bool:
     """
-    Restores back the long-lived tokens into the credentials file
+    Restores back the long-lived credentials.
     Deletes the mentaws db -- does not actually delete mentaws (hence we call it unsetup)
     """
 
@@ -218,20 +170,12 @@ def unsetup() -> bool:
                 del temp_config[profile][key]
     
     write_creds_file(config=temp_config, replace=True)
-    mentaws_db_path = remove_creds_file()
+    mentaws_db_path = remove_mentaws_db()
 
     safe_print(f"{mentaws_db_path} has been been deleted, it's like we were never here")
-    safe_print(unsetup_message)
+    safe_print(mentaws_config.unsetup_message)
     
     return True
-
-
-def yes_or_no(question):
-    reply = str(input(question + " (y/n): ")).lower().strip()
-    if reply[0] == "y":
-        return True
-    else:
-        return False
 
 
 def safe_print(print_string: str) -> None:

@@ -22,37 +22,13 @@ config = {
     },
 }
 
-welcome_message = """Welcome to mentaws!"""
-
-help_message = """
-usage: mentaws {setup,refresh,list,remove} [-p PROFILES]
-
-Welcome to mentaws! ⏳
-
-Commands:
-  setup                 First time setup of mentaws.
-  list                  List all available AWS profiles in mentaws
-  refresh               Refreshes all AWS credentials in security file.
-  remove                Permanently removes an AWS profile from mentaws.
-
-optional arguments:
-  -p, --profile         Comma-separate list of profiles to be actioned on
-
-Example commands:
-  mentaws setup
-  mentaws list
-  mentaws refresh
-  mentaws refresh -p default
-  mentaws refresh -p default,profile1,profile2
-  mentaws remove -p default
-
-"""
-
 refresh_message = """
 You're all fresh 😎
 """
 
 unsetup_message = """So long, farewell, auf Wiedersehen, goodbye 😢"""
+setup_message = """mentaws successfully setup, run mentaws refresh to get fresh tokens"""
+already_setup_message = "It looks like mentaws is already setup, use mentaws refresh or mentaws list"
 
 
 def get_platform_config() -> dict:
