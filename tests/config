@@ -1,0 +1,11 @@
+[default]
+output = json
+region = ap-southeast-1
+
+[profile mentaws1]
+region = ap-southeast-1
+output = yaml
+
+[profile mentaws2]
+region = ap-southeast-2
+output = json
