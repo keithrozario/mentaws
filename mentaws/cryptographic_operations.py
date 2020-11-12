@@ -39,6 +39,7 @@ def get_key(app_name: str, key_name: str) -> Fernet:
 
 def decrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
     """
+    Key refers to AWS Secret keys, not encryption keys
     Args:
         profiles: dictionary of format {'profile': <value>, 'aws_secret_access_key': <value>}
         app_name: app name of key in keychain
@@ -70,6 +71,7 @@ def decrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
 
 def encrypt_keys(profiles: List[dict], app_name: str, key_name: str) -> dict:
     """
+    Key refers to AWS Secret keys, not encryption keys
     Args:
         profiles: dictionary of format {'profile': <value>, 'aws_secret_access_key': <value>}
         app_name: app name of key in keychain
