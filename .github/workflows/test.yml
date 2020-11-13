@@ -25,6 +25,13 @@ jobs:
       - name: Poetry install
         run: poetry install
 
+      - name: Build Ubuntu packages
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          poetry add secretstorage
+          apt-get install libdbus-1-dev libdbus-glib-1-dev
+          poetry add dbus-python
+
       - name: Poetry test
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
