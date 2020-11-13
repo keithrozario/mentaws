@@ -3,6 +3,21 @@ name = "mentaws"
 version = "0.6.0"
 description = "moMENTary AWS credentials"
 authors = ["keithrozario <keith@keithrozario.com>"]
+repository = "https://github.com/keithrozario/mentaws"
+homepage = "https://github.com/keithrozario/mentaws"
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+]
+readme = "README.MD"
+license = "MIT"
+keywords = ["aws", "mentaws", "tokens", "credentials", "temporary"]
+
 
 [tool.poetry.dependencies]
 python = "^3.6"
@@ -24,3 +39,6 @@ mts = "mentaws.main:main"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/keithrozario/mentaws/issues"
