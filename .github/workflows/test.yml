@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-        os: [macOS-latest, windows-latest, macOS-11.0]
+        os: [macOS-latest, windows-latest, ubuntu-latest, macOS-11.0]
         poetry-version: [1.0.5]
     runs-on: ${{ matrix.os }}
     steps:
