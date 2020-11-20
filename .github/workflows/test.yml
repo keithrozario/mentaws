@@ -39,7 +39,7 @@ jobs:
         run: poetry run pytest . --cov ../mentaws --cov-report term-missing -vv
 
       - name: Update Test Coverage
-        if: github.ref == 'refs/heads/release'  # only on the feature branch do we publish code coverage stats
+        if: github.ref == 'refs/heads/release' && contains(matrix.os, 'mac')
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }} 
         working-directory: ./tests
