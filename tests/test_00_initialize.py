@@ -44,7 +44,7 @@ def test_setup_creds_file():
 
 def test_setup_config_file():
 
-    config_file_copy = os.path.join(os.getcwd(), "tests", "config")
+    config_file_copy = os.path.join(os.getcwd(), "config")
 
     # copy config to config folder
     with open(config_file_copy, "rb") as src, open(
