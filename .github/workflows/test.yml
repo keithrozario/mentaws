@@ -36,7 +36,7 @@ jobs:
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
         working-directory: ./tests
-        run: poetry run pytest --cov ../mentaws tests/ --cov-report term-missing -vv
+        run: poetry run pytest . --cov ../mentaws --cov-report term-missing -vv
 
       - name: Update Test Coverage
         if: github.ref == 'refs/heads/release'  # only on the feature branch do we publish code coverage stats
