@@ -41,8 +41,7 @@ mentaws = "mentaws.main:main"
 mts = "mentaws.main:main"
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/keithrozario/lambda_cache/issues"
-"Docs" = "https://lambda-cache.readthedocs.io"
+"Bug Tracker" = "https://github.com/keithrozario/mentaws/issues"
 
 [build-system]
 requires = ["poetry>=0.12"]
