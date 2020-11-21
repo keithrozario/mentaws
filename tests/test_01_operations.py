@@ -26,7 +26,7 @@ def mock_set_key(*args, **kwargs):
 
 
 def test_version():
-    assert __version__ == "0.6.0"
+    assert __version__ == "0.6.1"
 
 
 def test_setup(monkeypatch):
