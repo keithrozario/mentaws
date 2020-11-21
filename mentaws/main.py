@@ -37,9 +37,11 @@ def setup():
 
 
 @main.command()
-@click.option('--profiles', '-p', 
-    help='Comma separated list of profiles to refresh (e.g. profile1,profile2)',
-    default=""
+@click.option(
+    "--profiles",
+    "-p",
+    help="Comma separated list of profiles to refresh (e.g. profile1,profile2)",
+    default="",
 )
 def refresh(profiles: str = ""):
     """
@@ -83,12 +85,14 @@ def refresh(profiles: str = ""):
 
 
 @main.command()
-@click.option('--profiles', '-p', 
-    help='Comma separated list of profiles to remove (e.g. profile1,profile2)',
-    required=True
+@click.option(
+    "--profiles",
+    "-p",
+    help="Comma separated list of profiles to remove (e.g. profile1,profile2)",
+    required=True,
 )
-@click.confirmation_option(prompt=f'Deleting a profile is irreversible, are you sure?')
-def remove(profiles: str="") -> bool:
+@click.confirmation_option(prompt=f"Deleting a profile is irreversible, are you sure?")
+def remove(profiles: str = "") -> bool:
     """
     Removes an AWS profile from mentaws [REQUIRES -p option].
     """
@@ -96,8 +100,8 @@ def remove(profiles: str="") -> bool:
 
     for profile_name in profiles_list:
         if operations.check_profile_in_db(profile_name):
-                operations.remove_profile_from_db(profile_name)
-                safe_print(f"Profile {profile_name} was deleted")
+            operations.remove_profile_from_db(profile_name)
+            safe_print(f"Profile {profile_name} was deleted")
         else:
             safe_print(f"Profile {profile_name} not found")
 
@@ -131,7 +135,7 @@ def status() -> List[dict]:
                 safe_print(f"   {section:<30}-{' '*24}No Token Expiry")
                 temp = {"profile": section}
             profiles.append(temp)
-    
+
     safe_print("")
 
     return profiles
@@ -156,13 +160,13 @@ def unsetup() -> bool:
         for key in temp_config[profile]:
             if temp_config[profile][key] == "":
                 del temp_config[profile][key]
-    
+
     operations.write_creds_file(config=temp_config, replace=True)
     mentaws_db_path = operations.remove_mentaws_db()
 
     safe_print(f"{mentaws_db_path} has been been deleted, it's like we were never here")
     safe_print(mentaws_config.unsetup_message)
-    
+
     return True
 
 

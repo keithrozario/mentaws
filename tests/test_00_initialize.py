@@ -29,7 +29,9 @@ def test_setup_creds_file():
         print("Loaded creds file")
     except FileExistsError:
         # testing on local machine
-        if os.path.exists(settings.creds_file_path) and os.path.exists(settings.copy_creds_file_path):
+        if os.path.exists(settings.creds_file_path) and os.path.exists(
+            settings.copy_creds_file_path
+        ):
             # copy creds
             with open(settings.copy_creds_file_path, "rb") as src, open(
                 settings.creds_file_path, "wb"
@@ -42,10 +44,12 @@ def test_setup_creds_file():
 
 def test_setup_config_file():
 
-    config_file_copy = os.path.join(os.getcwd(), "tests", "config")
+    config_file_copy = os.path.join(os.getcwd(), "config")
 
     # copy config to config folder
-    with open(config_file_copy, "rb") as src, open(settings.config_file_path, "wb") as dst:
+    with open(config_file_copy, "rb") as src, open(
+        settings.config_file_path, "wb"
+    ) as dst:
         dst.write(src.read())
 
     assert os.path.exists(settings.config_file_path) == True

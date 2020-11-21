@@ -15,8 +15,10 @@ from tests.settings import platform_config, test_key, profiles
 from click.testing import CliRunner
 import pytest
 
+
 def mock_get_key(*args, **kwargs):
     return test_key
+
 
 @pytest.fixture(scope="module")
 def runner():
@@ -35,7 +37,9 @@ def test_refresh(runner, monkeypatch):
 
     monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
-    result = runner.invoke(main.main, ['refresh','-p','default,mentaws1,mentaws2,mentawsFail'])
+    result = runner.invoke(
+        main.main, ["refresh", "-p", "default,mentaws1,mentaws2,mentawsFail"]
+    )
     assert result.exit_code == 0
 
     file_stat = os.stat(creds_path)

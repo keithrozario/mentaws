@@ -92,7 +92,6 @@ def get_plaintext_credentials(profiles: str = "", all: bool = False) -> List[dic
     conn.row_factory = sqlite3.Row
     db = conn.cursor()
 
-    
     # Get all profiles in DB
     try:
         # Select all profiles (even those without creds)
@@ -100,14 +99,16 @@ def get_plaintext_credentials(profiles: str = "", all: bool = False) -> List[dic
             db.execute(f"SELECT * FROM {table_name} ORDER BY profile")
         # Select only profiles with creds
         elif len(profiles) == 0:
-            db.execute(f"SELECT * FROM {table_name} WHERE aws_access_key_id != '' ORDER BY profile")
+            db.execute(
+                f"SELECT * FROM {table_name} WHERE aws_access_key_id != '' ORDER BY profile"
+            )
         else:
             profile_list = profiles.split(",")
             # Select only one profile
             if len(profile_list) == 1:
                 db.execute(
                     f"SELECT * FROM {table_name} WHERE profile = ? AND aws_access_key_id != '' ORDER BY profile",
-                    (profile_list[0],)
+                    (profile_list[0],),
                 )
             # Select a list of profiles
             else:
@@ -151,12 +152,11 @@ def write_creds_file(config: ConfigParser, replace: bool = True):
       **Future addition**
       replace: if True, replaces entire credentials file. If False, only over-writes existing sections
     """
-    
+
     creds = ConfigParser()
 
     if not replace:
         creds.read(filenames=[creds_file_path], encoding="utf-8")
-    
 
     creds.read_dict(configparser_to_dict(config))
     with open(creds_file_path, "w") as creds_file:
@@ -220,7 +220,6 @@ def write_creds_to_db(creds: ConfigParser) -> List[str]:
 
         temp_profile["other_options"] = json.dumps(other_options)
         rows_to_write.append(temp_profile)
-
 
     # append with encrypted keys, we do it this way, so that one call can be made to cryptographic operations, and retrieve the secret key once!
     # This reduces the number of times the user has to enter the keychain password
@@ -296,7 +295,7 @@ def creds_file_contents() -> ConfigParser:
 
 
 def remove_mentaws_db() -> str:
-    
+
     try:
         os.remove(mentaws_db_path)
     except OSError:

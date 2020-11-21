@@ -35,8 +35,13 @@ jobs:
       - name: Poetry test
         env:
           CREDENTIALS_FILE_CONTENTS : ${{ secrets.AWS_CREDENTIALS_FILE_CONTENTS }}
-        run: poetry run pytest -s -x .
+        working-directory: ./tests
+        run: poetry run pytest . --cov ../mentaws --cov-report term-missing -vv
 
-
-
+      - name: Update Test Coverage
+        if: github.ref == 'refs/heads/release' && contains(matrix.os, 'mac')
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }} 
+        working-directory: ./tests
+        run: poetry run coveralls
 

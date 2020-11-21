@@ -28,6 +28,7 @@ class MockClient:
             }
         }
 
+
 class MockClient_2:
 
     # mock client
@@ -42,8 +43,10 @@ class MockClient_2:
             }
         }
 
+
 def mock_get_key(*args, **kwargs):
     return test_key
+
 
 @pytest.fixture(scope="module")
 def runner():
@@ -75,7 +78,9 @@ def test_setup_creds_file():
         print("Loaded creds file")
     except FileExistsError:
         # testing on local machine
-        if os.path.exists(settings.creds_file_path) and os.path.exists(settings.copy_creds_file_path):
+        if os.path.exists(settings.creds_file_path) and os.path.exists(
+            settings.copy_creds_file_path
+        ):
             # copy creds
             with open(settings.copy_creds_file_path, "rb") as src, open(
                 settings.creds_file_path, "wb"
@@ -91,27 +96,27 @@ def test_hello(runner):
     assert result.exit_code == 0
     assert result.output[:6] == "Usage:"
 
-    result = runner.invoke(main.main, ['--help'])
+    result = runner.invoke(main.main, ["--help"])
     assert result.exit_code == 0
     assert result.output[:6] == "Usage:"
 
 
-def test_setup(runner,monkeypatch):
+def test_setup(runner, monkeypatch):
 
     monkeypatch.setattr(keyring, "get_password", mock_get_key)
     monkeypatch.setattr(keyring, "set_password", mock_get_key)
 
-    result = runner.invoke(main.main, ['setup'])
+    result = runner.invoke(main.main, ["setup"])
     assert result.exit_code == 0
     assert mentaws_config.setup_message in result.output
-    
-    result = runner.invoke(main.main, ['setup'])
+
+    result = runner.invoke(main.main, ["setup"])
     assert result.exit_code == 0
     assert mentaws_config.already_setup_message in result.output
 
 
 def test_refresh(runner, monkeypatch):
-    
+
     creds_path = os.path.join(
         platform_config["aws_directory"], platform_config["creds_file_name"]
     )
@@ -123,15 +128,15 @@ def test_refresh(runner, monkeypatch):
     monkeypatch.setattr(boto3, "client", mock_boto3_client)
     monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
-    result = runner.invoke(main.main, ['refresh'])
+    result = runner.invoke(main.main, ["refresh"])
     assert result.exit_code == 0
     assert mentaws_config.refresh_message in result.output
 
-    result = runner.invoke(main.main, ['refresh','-p','default'])
+    result = runner.invoke(main.main, ["refresh", "-p", "default"])
     assert result.exit_code == 0
     assert mentaws_config.refresh_message in result.output
 
-    result = runner.invoke(main.main, ['refresh','-p','mentaws3,default'])
+    result = runner.invoke(main.main, ["refresh", "-p", "mentaws3,default"])
     assert result.exit_code == 0
     assert mentaws_config.refresh_message in result.output
 
@@ -142,20 +147,19 @@ def test_refresh(runner, monkeypatch):
 
 def test_status(runner):
 
-    result = runner.invoke(main.main, ['status'])
+    result = runner.invoke(main.main, ["status"])
     assert result.exit_code == 0
     assert "👷🏿 Profile" in result.output
 
 
 def test_remove_profile(runner):
-    
-    result = runner.invoke(main.main, ['remove','-p', 'mentaws1', '--yes'])
+
+    result = runner.invoke(main.main, ["remove", "-p", "mentaws1", "--yes"])
     assert result.exit_code == 0
-    assert operations.check_profile_in_db('mentaws1') is False
+    assert operations.check_profile_in_db("mentaws1") is False
 
 
 def test_add_new_profile(runner, monkeypatch):
-
     def mock_boto3_client(*args, **kwargs):
         if args[0] == "sts":
             return MockClient()
@@ -171,18 +175,19 @@ def test_add_new_profile(runner, monkeypatch):
     config.read([creds_path, f"{creds_path}.copy"])
 
     # remove extra fields
-    config.remove_option('mentaws1', 'aws_session_token')
-    config.remove_option('mentaws1', 'aws_token_expiry_time_human')
-    config.remove_option('mentaws1', 'aws_token_expiry_time_machine')
+    config.remove_option("mentaws1", "aws_session_token")
+    config.remove_option("mentaws1", "aws_token_expiry_time_human")
+    config.remove_option("mentaws1", "aws_token_expiry_time_machine")
 
     with open(creds_path, "w") as creds_file:
         config.write(creds_file)
-    
-    result = runner.invoke(main.main, ['refresh','-p','default'])
-    assert result.exit_code == 0
-    assert operations.check_profile_in_db('mentaws1') is True
 
-    result = runner.invoke(main.main, ['refresh'])
+    result = runner.invoke(main.main, ["refresh", "-p", "default"])
+    assert result.exit_code == 0
+    assert operations.check_profile_in_db("mentaws1") is True
+
+    result = runner.invoke(main.main, ["refresh"])
+
 
 def test_refresh_some_profiles(runner, monkeypatch):
     """
@@ -199,7 +204,7 @@ def test_refresh_some_profiles(runner, monkeypatch):
     monkeypatch.setattr(boto3, "client", mock_boto3_client)
     monkeypatch.setattr(keyring, "get_password", mock_get_key)
 
-    result = runner.invoke(main.main, ['refresh','-p','mentaws1,mentaws2'])
+    result = runner.invoke(main.main, ["refresh", "-p", "mentaws1,mentaws2"])
     assert result.exit_code == 0
 
     file_stat = os.stat(creds_path)
@@ -223,6 +228,3 @@ def test_unsetup(runner):
     Unsetup is tested in test_99_unsetup
     """
     pass
-
-
-

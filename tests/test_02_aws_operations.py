@@ -1,5 +1,6 @@
 from mentaws import aws_operations
 
+
 def test_region_setting():
 
     assert aws_operations.get_region("default") == "ap-southeast-1"
