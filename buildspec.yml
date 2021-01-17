@@ -1,0 +1,18 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      python: latest
+    commands:
+      - pip3 install poetry
+      - poetry install
+  build:
+    commands:
+      - poetry build
+artifacts:
+  files:
+    - dist/*
