@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: Apache-2.0
+Resources:
+  CFNUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: mentawsAdminUser
+      Policies:
+      - PolicyName: mentawsAdminAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - '*'
+            Resource:
+            - '*'
