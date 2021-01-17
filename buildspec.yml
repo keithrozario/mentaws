@@ -16,3 +16,7 @@ phases:
 artifacts:
   files:
     - dist/*
+  secondary-artifacts:
+    outputTar:
+      files:
+        - dist/mentaws-0.6.0.tar.gz
